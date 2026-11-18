@@ -1,0 +1,56 @@
+<div class="overflow-x-auto">
+  <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+    <caption class="sr-only">
+      Clinic specializations with their current status
+    </caption>
+    <thead class="bg-gray-50 font-medium text-gray-600">
+      <tr>
+        <th scope="col" class="px-4 py-3 sm:px-6">Specialization Name</th>
+        <th scope="col" class="px-4 py-3 sm:px-6">Status</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 text-gray-700">
+      @for (row of rows(); track row.id) {
+        <tr
+          (click)="onOpen(row.id)"
+          class="cursor-pointer transition-colors hover:bg-gray-50 focus-within:bg-gray-50"
+        >
+          <td class="px-4 py-4 font-medium text-gray-900 sm:px-6">
+            <button
+              type="button"
+              (click)="$event.stopPropagation(); onOpen(row.id)"
+              class="cursor-pointer rounded text-left font-medium text-gray-900 underline-offset-2 hover:text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              {{ row.name }}
+            </button>
+          </td>
+          <td class="px-4 py-4 sm:px-6" (click)="$event.stopPropagation()">
+            <fieldset [attr.aria-busy]="statusSavingId() === row.id">
+              <legend class="sr-only">Status of {{ row.name }}</legend>
+              <div class="flex flex-wrap gap-5">
+                @for (status of statusOptions; track status) {
+                  <label
+                    class="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-700"
+                  >
+                    <input
+                      type="radio"
+                      [name]="'specialization-status-' + row.id"
+                      [checked]="row.status === status"
+                      [disabled]="statusSavingId() === row.id"
+                      (change)="onStatusChange(row.id, status)"
+                      class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                    <span>{{ status }}</span>
+                  </label>
+                }
+              </div>
+              @if (statusSavingId() === row.id) {
+                <p class="mt-1 text-xs text-gray-500" role="status">Saving status...</p>
+              }
+            </fieldset>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

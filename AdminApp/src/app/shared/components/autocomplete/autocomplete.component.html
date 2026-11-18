@@ -1,0 +1,48 @@
+<div class="relative">
+  <input
+    #input
+    [id]="inputId()"
+    type="text"
+    role="combobox"
+    autocomplete="off"
+    aria-autocomplete="list"
+    aria-haspopup="listbox"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-controls]="listboxId"
+    [attr.aria-activedescendant]="activeOptionId()"
+    [attr.aria-describedby]="describedBy()"
+    [attr.aria-invalid]="invalid() ? 'true' : null"
+    [attr.aria-required]="required() ? 'true' : null"
+    [placeholder]="placeholder()"
+    [disabled]="isDisabled()"
+    [class]="inputClasses()"
+    (input)="onInput($event)"
+    (focus)="onFocus()"
+    (blur)="onTouched()"
+    (keydown)="onKeydown($event)"
+  />
+
+  @if (isOpen()) {
+    <ul
+      [id]="listboxId"
+      role="listbox"
+      class="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5"
+    >
+      @if (filteredOptions().length === 0) {
+        <li class="px-3 py-2 text-gray-500" role="presentation">No matches</li>
+      } @else {
+        @for (option of filteredOptions(); track option.id; let i = $index) {
+          <li
+            [id]="optionId(i)"
+            role="option"
+            [attr.aria-selected]="i === activeIndex()"
+            [class]="optionClasses(i)"
+            (mousedown)="onOptionMouseDown($event, option)"
+          >
+            {{ option.label }}
+          </li>
+        }
+      }
+    </ul>
+  }
+</div>

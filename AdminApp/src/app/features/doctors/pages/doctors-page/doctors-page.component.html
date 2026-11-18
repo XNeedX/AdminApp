@@ -1,0 +1,53 @@
+<div class="min-h-screen bg-gray-50 p-4 md:p-8">
+  <div class="mx-auto max-w-6xl space-y-6">
+    <div
+      class="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Doctors</h1>
+        <p class="mt-1 text-sm text-gray-500">Manage the hospital medical staff profiles</p>
+      </div>
+      <button
+        type="button"
+        (click)="openCreateDialog()"
+        class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+      >
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Create doctor
+      </button>
+    </div>
+
+    <app-doctor-filters
+      [state]="filterState()"
+      [nameOptions]="nameOptions()"
+      [specializationOptions]="specializationOptions()"
+      [officeOptions]="officeOptions()"
+      (filterChange)="onFilterChange($event)"
+    />
+
+    @if (hasActiveFilters()) {
+      <div class="flex items-center justify-between rounded-lg bg-blue-50 px-4 py-2 text-sm text-blue-800">
+        <span>Showing doctors that match the selected filters.</span>
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="cursor-pointer rounded-md px-2 py-1 font-medium underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          Reset
+        </button>
+      </div>
+    }
+
+    <app-doctor-table
+      [rows]="rows()"
+      [isLoading]="isLoading()"
+      [loadError]="loadError()"
+      [canChangeStatus]="canChangeStatus()"
+      (statusChange)="onStatusChange($event)"
+      (profileRequested)="openProfile($event)"
+      (retryRequested)="reload()"
+    />
+  </div>
+</div>

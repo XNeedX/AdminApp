@@ -1,0 +1,60 @@
+<header class="border-b border-gray-200 bg-white">
+  <div
+    class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8"
+  >
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+      <div class="flex items-center gap-2">
+        <span class="text-base font-semibold text-gray-900">InnoClinic</span>
+        <span class="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">Admin</span>
+      </div>
+
+      @if (navItems().length > 0) {
+        <nav class="flex items-center gap-1" aria-label="Primary">
+          @for (item of navItems(); track item.path) {
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="bg-blue-50 text-blue-700"
+              [routerLinkActiveOptions]="{ exact: false }"
+              class="rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              {{ item.label }}
+            </a>
+          }
+        </nav>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+      @if (email()) {
+        <span class="truncate text-sm text-gray-600" title="{{ email() }}">{{ email() }}</span>
+      }
+
+      @if (canViewProfile()) {
+        <button
+          type="button"
+          (click)="onOpenProfile()"
+          aria-label="Open profile"
+          title="Open profile"
+          class="inline-flex cursor-pointer items-center justify-center rounded-full border border-gray-300 p-2 text-gray-600 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        </button>
+      }
+
+      <button
+        type="button"
+        class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        (click)="onSignOut()"
+      >
+        Sign out
+      </button>
+    </div>
+  </div>
+</header>

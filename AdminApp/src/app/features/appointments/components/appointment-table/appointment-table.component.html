@@ -1,0 +1,98 @@
+@if (loadError(); as error) {
+  <div
+    class="rounded-xl border border-red-200 bg-red-50 p-6"
+    role="alert"
+  >
+    <p class="text-sm font-semibold text-red-800">Could not load the appointments list.</p>
+    <p class="mt-1 text-sm text-red-700">{{ error }}</p>
+    <p class="mt-3 text-sm text-gray-600">
+      The previous rows are kept. Keep the current filters and press "Generate" to try again.
+    </p>
+  </div>
+}
+
+@if (!hasGenerated()) {
+  <div class="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+    <p class="text-sm text-gray-500">Choose filters and generate the list.</p>
+  </div>
+} @else {
+  <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+        <thead class="sticky top-0 z-10 bg-gray-50 font-medium text-gray-600">
+          <tr>
+            <th scope="col" class="px-4 py-3 sm:px-6" aria-sort="ascending">Time</th>
+            <th scope="col" class="px-4 py-3 sm:px-6" aria-sort="ascending">Doctor</th>
+            <th scope="col" class="px-4 py-3 sm:px-6">Patient</th>
+            <th scope="col" class="px-4 py-3 sm:px-6">Phone</th>
+            <th scope="col" class="px-4 py-3 sm:px-6" aria-sort="ascending">Service</th>
+            <th scope="col" class="px-4 py-3 text-right sm:px-6">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-gray-700">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="6" class="px-4 py-12 text-center text-sm text-gray-500 sm:px-6" role="status" aria-live="polite">
+                Loading appointments…
+              </td>
+            </tr>
+          } @else {
+            @for (row of rows(); track row.id) {
+              <tr class="transition-colors hover:bg-gray-50" [class.bg-emerald-50]="row.isApproved">
+                <td class="whitespace-nowrap px-4 py-4 font-medium text-gray-900 sm:px-6">
+                  <div class="flex flex-col gap-1">
+                    <span>{{ row.timeRangeLabel }}</span>
+                    <app-appointment-status-badge [approved]="row.isApproved" />
+                  </div>
+                </td>
+                <td class="px-4 py-4 text-gray-700 sm:px-6">{{ row.doctorFullName }}</td>
+                <td class="px-4 py-4 font-medium text-gray-900 sm:px-6">{{ row.patientFullName }}</td>
+                <td class="whitespace-nowrap px-4 py-4 text-gray-600 sm:px-6">{{ row.patientPhoneNumber }}</td>
+                <td class="px-4 py-4 text-gray-600 sm:px-6">{{ row.serviceName }}</td>
+                <td class="px-4 py-4 sm:px-6">
+                  <div class="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      (click)="onApprove(row)"
+                      [disabled]="row.isApproved || row.isApproving"
+                      [attr.aria-disabled]="row.isApproved || row.isApproving ? 'true' : null"
+                      [attr.aria-label]="approveLabel(row)"
+                      class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-800 transition hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400"
+                    >
+                      {{ row.isApproving ? 'Approving…' : 'Approve' }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="onCancel(row)"
+                      [disabled]="row.isDeleting"
+                      [attr.aria-label]="cancelLabel(row)"
+                      class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400"
+                    >
+                      {{ row.isDeleting ? 'Cancelling…' : 'Cancel' }}
+                    </button>
+                    <button
+                      type="button"
+                      disabled
+                      aria-disabled="true"
+                      [attr.aria-label]="rescheduleLabel(row)"
+                      title="Reschedule is not available yet"
+                      class="inline-flex cursor-not-allowed items-center justify-center rounded-lg border border-gray-200 bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-400"
+                    >
+                      Reschedule
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="px-4 py-12 text-center text-sm text-gray-500 sm:px-6">
+                  No appointments found for the selected filters.
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

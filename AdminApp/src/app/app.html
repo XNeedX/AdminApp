@@ -1,0 +1,13 @@
+@if (isAuthenticated()) {
+  <app-header
+    [email]="userEmail()"
+    [canViewProfile]="isDoctor()"
+    [navItems]="navItems()"
+    (openProfile)="onOpenProfile()"
+    (signOut)="onSignOut()"
+  />
+}
+
+<router-outlet />
+
+<app-toast-container [toasts]="toasts()" (dismissed)="dismissToast($event)" />

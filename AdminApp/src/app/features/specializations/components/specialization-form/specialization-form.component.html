@@ -1,0 +1,203 @@
+<form class="space-y-5" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+  <div>
+    <label for="specialization-name" class="block text-sm font-medium text-gray-700"> Name </label>
+    <input
+      id="specialization-name"
+      type="text"
+      formControlName="name"
+      autocomplete="off"
+      maxlength="100"
+      class="mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      [class.border-gray-300]="!isNameShown()"
+      [class.border-red-500]="isNameShown()"
+      [attr.aria-invalid]="isNameShown()"
+      [attr.aria-describedby]="isNameShown() ? 'specialization-name-error' : null"
+      aria-required="true"
+    />
+    @if (nameMessage(); as message) {
+      <p id="specialization-name-error" role="alert" class="mt-1 text-sm text-red-600">
+        {{ message }}
+      </p>
+    }
+  </div>
+
+  <fieldset>
+    <legend class="block text-sm font-medium text-gray-700">Status</legend>
+    <div class="mt-2 flex flex-wrap gap-6">
+      @for (status of statusOptions; track status) {
+        <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+          <input
+            type="radio"
+            formControlName="status"
+            [value]="status"
+            class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span>{{ status }}</span>
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  <div class="overflow-x-auto rounded-lg border border-gray-200">
+    <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+      <caption class="sr-only">
+        Services included in this specialization
+      </caption>
+      <thead class="bg-gray-50 font-medium text-gray-600">
+        <tr>
+          <th scope="col" class="px-3 py-2 sm:px-4">Service Name</th>
+          <th scope="col" class="px-3 py-2 sm:px-4">Price</th>
+          <th scope="col" class="px-3 py-2 sm:px-4">Status</th>
+          <th scope="col" class="px-3 py-2 sm:px-4">Service Category</th>
+          <th scope="col" class="px-3 py-2 text-right sm:px-4">
+            <span class="sr-only">Actions</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100" formArrayName="services">
+        @for (row of form.controls.services.controls; track row; let i = $index) {
+          <tr [formGroupName]="i">
+            <td class="px-3 py-3 align-top sm:px-4">
+              <input
+                type="text"
+                formControlName="name"
+                autocomplete="off"
+                maxlength="100"
+                [attr.aria-label]="'Service name for row ' + (i + 1)"
+                class="block w-full min-w-40 rounded-md border px-2 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                [class.border-gray-300]="!isRowNameShown(row)"
+                [class.border-red-500]="isRowNameShown(row)"
+                [attr.aria-invalid]="isRowNameShown(row)"
+                [attr.aria-describedby]="isRowNameShown(row) ? 'service-row-name-error-' + i : null"
+              />
+              @if (rowNameMessage(row); as message) {
+                <p
+                  [id]="'service-row-name-error-' + i"
+                  role="alert"
+                  class="mt-1 text-xs text-red-600"
+                >
+                  {{ message }}
+                </p>
+              }
+            </td>
+            <td class="px-3 py-3 align-top sm:px-4">
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                inputmode="decimal"
+                formControlName="price"
+                [attr.aria-label]="'Service price for row ' + (i + 1)"
+                class="block w-full min-w-28 rounded-md border px-2 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                [class.border-gray-300]="!isPriceShown(row)"
+                [class.border-red-500]="isPriceShown(row)"
+                [attr.aria-invalid]="isPriceShown(row)"
+                [attr.aria-describedby]="isPriceShown(row) ? 'service-row-price-error-' + i : null"
+              />
+              @if (priceMessage(row); as message) {
+                <p
+                  [id]="'service-row-price-error-' + i"
+                  role="alert"
+                  class="mt-1 text-xs text-red-600"
+                >
+                  {{ message }}
+                </p>
+              }
+            </td>
+            <td class="px-3 py-3 align-top sm:px-4">
+              <div class="flex flex-wrap gap-3">
+                @for (status of serviceStatusOptions; track status) {
+                  <label
+                    class="inline-flex cursor-pointer items-center gap-1.5 text-sm text-gray-700"
+                  >
+                    <input
+                      type="radio"
+                      formControlName="status"
+                      [value]="status"
+                      class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>{{ status }}</span>
+                  </label>
+                }
+              </div>
+            </td>
+            <td class="px-3 py-3 align-top sm:px-4">
+              <select
+                formControlName="category"
+                [attr.aria-label]="'Service category for row ' + (i + 1)"
+                class="block w-full min-w-36 rounded-md border bg-white px-2 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                [class.border-gray-300]="!isCategoryShown(row)"
+                [class.border-red-500]="isCategoryShown(row)"
+                [attr.aria-invalid]="isCategoryShown(row)"
+                [attr.aria-describedby]="
+                  isCategoryShown(row) ? 'service-row-category-error-' + i : null
+                "
+              >
+                <option value="">Select a category</option>
+                @for (option of categoryOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+              @if (categoryMessage(row); as message) {
+                <p
+                  [id]="'service-row-category-error-' + i"
+                  role="alert"
+                  class="mt-1 text-xs text-red-600"
+                >
+                  {{ message }}
+                </p>
+              }
+            </td>
+            <td class="px-3 py-3 text-right align-top sm:px-4">
+              @if (!isStoredRow(row)) {
+                <button
+                  type="button"
+                  (click)="discardRow(i)"
+                  [attr.aria-label]="'Discard service row ' + (i + 1)"
+                  class="cursor-pointer rounded-md border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
+                  Discard
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500">
+              No services yet. Use "Add service" to add the first one.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex justify-start">
+    <button
+      type="button"
+      (click)="addService()"
+      [disabled]="submitting()"
+      class="inline-flex cursor-pointer items-center gap-2 rounded-md border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      Add service
+    </button>
+  </div>
+
+  <div class="flex flex-col-reverse gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end">
+    <button
+      type="button"
+      (click)="onCancel()"
+      [disabled]="submitting()"
+      class="cursor-pointer rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      [disabled]="!canSubmit()"
+      class="cursor-pointer rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {{ mode() === 'edit' ? 'Save changes' : 'Confirm' }}
+    </button>
+  </div>
+</form>

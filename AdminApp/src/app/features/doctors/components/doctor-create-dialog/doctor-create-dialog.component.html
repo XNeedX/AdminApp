@@ -1,0 +1,15 @@
+<div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto">
+  <app-doctor-form
+    [mode]="mode"
+    [form]="form"
+    [specializations]="specializations()"
+    [offices]="offices()"
+    [formError]="formError()"
+    [isSubmitting]="isSubmitting()"
+    [canSubmit]="canSubmit()"
+    (submitted)="submit()"
+    (cancelled)="cancel()"
+    (specializationSelected)="onSpecializationSelected($event)"
+    (officeSelected)="onOfficeSelected($event)"
+  />
+</div>

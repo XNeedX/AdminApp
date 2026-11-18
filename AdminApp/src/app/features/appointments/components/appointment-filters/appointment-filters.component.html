@@ -1,0 +1,95 @@
+<div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div class="flex flex-col gap-1">
+      <app-app-date-field
+        [id]="'appointment-filter-date'"
+        label="Date"
+        [value]="state().date"
+        (valueChange)="onDateChange($event)"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="appointment-filter-doctor" class="block text-sm font-medium text-gray-700">
+        Doctor
+      </label>
+      <app-app-combobox
+        inputId="appointment-filter-doctor"
+        [options]="doctorOptions()"
+        [ngModel]="doctorText()"
+        (ngModelChange)="onDoctorText($event)"
+        (optionSelected)="onDoctorSelected($event)"
+        (blurred)="onDoctorBlur()"
+        placeholder="Any doctor"
+        emptyText="No matching doctors"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="appointment-filter-service" class="block text-sm font-medium text-gray-700">
+        Service
+      </label>
+      <app-app-combobox
+        inputId="appointment-filter-service"
+        [options]="serviceOptions()"
+        [ngModel]="serviceText()"
+        (ngModelChange)="onServiceText($event)"
+        (optionSelected)="onServiceSelected($event)"
+        (blurred)="onServiceBlur()"
+        placeholder="Any service"
+        emptyText="No matching services"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="appointment-filter-status" class="block text-sm font-medium text-gray-700">
+        Status
+      </label>
+      <select
+        id="appointment-filter-status"
+        [value]="state().status"
+        (change)="onStatusChange($event)"
+        class="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="appointment-filter-office" class="block text-sm font-medium text-gray-700">
+        Office
+      </label>
+      <select
+        id="appointment-filter-office"
+        [value]="state().officeId"
+        (change)="onOfficeChange($event)"
+        class="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        <option value="">Any office</option>
+        @for (office of offices(); track office.id) {
+          <option [value]="office.id">{{ office.displayName }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+    <button
+      type="button"
+      (click)="onCreateRequested()"
+      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+    >
+      Create an appointment
+    </button>
+    <button
+      type="button"
+      (click)="onGenerate()"
+      [disabled]="isLoading()"
+      class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-300"
+    >
+      {{ isLoading() ? 'Generating…' : 'Generate' }}
+    </button>
+  </div>
+</div>

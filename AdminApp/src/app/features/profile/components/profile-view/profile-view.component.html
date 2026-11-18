@@ -1,0 +1,91 @@
+<section class="rounded-xl border border-gray-200 bg-white shadow-sm">
+  @if (profile(); as doctor) {
+    <header class="flex flex-col gap-4 border-b border-gray-100 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-4">
+        <div
+          class="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100"
+        >
+          @if (doctor.photoPath) {
+            <img
+              [src]="doctor.photoPath"
+              [alt]="doctor.firstName + ' ' + doctor.lastName"
+              class="h-full w-full object-cover"
+            />
+          } @else {
+            <span class="text-xl font-semibold text-gray-500" aria-hidden="true">{{ initials() }}</span>
+          }
+        </div>
+
+        <div class="min-w-0">
+          <h1 class="truncate text-2xl font-bold text-gray-900">
+            {{ doctor.firstName }} {{ doctor.lastName }}
+          </h1>
+          <p class="mt-1 text-sm text-gray-500">{{ doctor.specialization }}</p>
+
+          @if (statusBadge(); as badge) {
+            <span
+              class="mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+              [class]="badge.badgeClasses"
+            >
+              {{ badge.label }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <button
+        type="button"
+        (click)="onEdit()"
+        class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+      >
+        Edit
+      </button>
+    </header>
+
+    <div class="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">First name</p>
+        <p class="mt-1 text-sm font-medium text-gray-900">{{ doctor.firstName }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Last name</p>
+        <p class="mt-1 text-sm font-medium text-gray-900">{{ doctor.lastName }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Middle name</p>
+        <p class="mt-1 text-sm font-medium text-gray-900">
+          {{ doctor.middleName ?? '—' }}
+        </p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Date of birth</p>
+        <p class="mt-1 text-sm font-medium text-gray-900">{{ doctor.dateOfBirth | date: 'mediumDate' }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Specialization</p>
+        <p class="mt-1 text-sm font-medium text-gray-900">{{ doctor.specialization }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Office</p>
+        <p class="mt-1 text-sm font-medium text-gray-900">{{ doctor.officeAddress }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Career start year</p>
+        <p class="mt-1 text-sm font-medium text-gray-900">{{ doctor.careerStartYear }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Status</p>
+        <p class="mt-1 text-sm font-medium text-gray-900">{{ doctor.status }}</p>
+      </div>
+    </div>
+  } @else {
+    <p class="p-6 text-sm text-gray-500">No profile to display.</p>
+  }
+</section>

@@ -1,0 +1,15 @@
+<div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-4 shadow-xl sm:p-6">
+  <h2 id="service-create-dialog-title" class="text-xl font-semibold text-gray-900">Add service</h2>
+  <p class="mt-1 text-sm text-gray-500">
+    The service is created under the specialization you are viewing.
+  </p>
+
+  <div class="mt-5">
+    <app-service-form
+      mode="create"
+      [submitting]="submitting()"
+      (submitted)="onSubmit($event)"
+      (cancelled)="onCancel()"
+    />
+  </div>
+</div>

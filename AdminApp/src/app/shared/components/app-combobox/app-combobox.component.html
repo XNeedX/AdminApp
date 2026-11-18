@@ -1,0 +1,60 @@
+<div class="relative">
+  <input
+    #origin="cdkOverlayOrigin"
+    cdkOverlayOrigin
+    [id]="inputId()"
+    type="text"
+    role="combobox"
+    autocomplete="off"
+    spellcheck="false"
+    [value]="text()"
+    [attr.placeholder]="placeholder()"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-controls]="isOpen() ? listboxId : null"
+    [attr.aria-activedescendant]="activeOptionId()"
+    [attr.aria-invalid]="invalid() ? 'true' : null"
+    [attr.aria-describedby]="describedBy()"
+    [attr.aria-disabled]="isDisabled() ? 'true' : null"
+    [disabled]="isDisabled()"
+    (focus)="onFocus()"
+    (input)="onInput($event)"
+    (blur)="onBlur()"
+    (keydown)="onKeydown($event)"
+    [class]="inputClasses()"
+  />
+</div>
+
+<ng-template
+  cdkConnectedOverlay
+  [cdkConnectedOverlayOrigin]="origin"
+  [cdkConnectedOverlayOpen]="isOpen()"
+  [cdkConnectedOverlayMatchWidth]="true"
+  [cdkConnectedOverlayHasBackdrop]="false"
+  [cdkConnectedOverlayScrollStrategy]="scrollStrategy"
+  [cdkConnectedOverlayPositions]="positions"
+  (detach)="onDetach()"
+>
+  <div
+    [id]="listboxId"
+    role="listbox"
+    class="max-h-60 overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+  >
+    @for (option of visibleOptions(); track option.id; let index = $index) {
+      <div
+        [id]="optionId(index)"
+        role="option"
+        [attr.aria-selected]="index === activeIndex()"
+        (mousedown)="onOptionMouseDown($event, option)"
+        class="cursor-pointer select-none px-3 py-2 text-sm"
+        [class.bg-blue-50]="index === activeIndex()"
+        [class.text-blue-900]="index === activeIndex()"
+        [class.text-gray-900]="index !== activeIndex()"
+        [class.hover:bg-blue-50]="index !== activeIndex()"
+      >
+        {{ option.label }}
+      </div>
+    } @empty {
+      <p class="px-3 py-2 text-sm text-gray-500">{{ emptyText() }}</p>
+    }
+  </div>
+</ng-template>

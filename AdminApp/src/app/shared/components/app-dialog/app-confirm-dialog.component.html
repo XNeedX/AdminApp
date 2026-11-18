@@ -1,0 +1,24 @@
+<app-dialog
+  [title]="data.title"
+  [showClose]="false"
+>
+  <p class="text-base leading-snug text-gray-800">{{ data.message }}</p>
+
+  <button
+    dialogFooter
+    type="button"
+    (click)="cancel()"
+    class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+  >
+    {{ data.cancelText }}
+  </button>
+
+  <button
+    dialogFooter
+    type="button"
+    (click)="confirm()"
+    class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+  >
+    {{ data.confirmText }}
+  </button>
+</app-dialog>

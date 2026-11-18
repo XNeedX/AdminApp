@@ -1,0 +1,28 @@
+<div
+  role="tablist"
+  aria-label="Sections"
+  aria-orientation="horizontal"
+  class="flex flex-wrap gap-1 border-b border-gray-200"
+  (keydown)="onKeydown($event)"
+>
+  @for (tab of tabs(); track tab.id) {
+    <button
+      #tabButton
+      type="button"
+      role="tab"
+      [id]="tabId(tab.id)"
+      [attr.aria-selected]="tab.id === activeId()"
+      [attr.aria-controls]="panelId(tab.id)"
+      [tabIndex]="tab.id === activeId() ? 0 : -1"
+      (click)="select(tab.id)"
+      class="cursor-pointer rounded-t-md border-b-2 px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+      [class.border-blue-600]="tab.id === activeId()"
+      [class.text-blue-700]="tab.id === activeId()"
+      [class.border-transparent]="tab.id !== activeId()"
+      [class.text-gray-600]="tab.id !== activeId()"
+      [class.hover:text-gray-900]="tab.id !== activeId()"
+    >
+      {{ tab.label }}
+    </button>
+  }
+</div>

@@ -1,0 +1,69 @@
+<div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div>
+      <label for="doctor-filter-name" class="block text-sm font-medium text-gray-700">
+        Doctor name
+      </label>
+      <app-autocomplete
+        inputId="doctor-filter-name"
+        placeholder="Search by name"
+        [options]="nameOptions()"
+        [formControl]="nameControl"
+        (optionSelected)="onNameSelected($event)"
+      />
+    </div>
+
+    <div>
+      <label for="doctor-filter-specialization" class="block text-sm font-medium text-gray-700">
+        Specialization
+      </label>
+      <select
+        id="doctor-filter-specialization"
+        [value]="state().specialization"
+        (change)="onSpecializationChange($event)"
+        class="mt-1 block w-full cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        <option value="">{{ allLabel }}</option>
+        @for (option of specializationOptions(); track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+        @if (missingSpecialization()) {
+          <option [value]="state().specialization" disabled>
+            {{ state().specialization }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label for="doctor-filter-office" class="block text-sm font-medium text-gray-700">
+        Office
+      </label>
+      <select
+        id="doctor-filter-office"
+        [value]="state().officeAddress"
+        (change)="onOfficeChange($event)"
+        class="mt-1 block w-full cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        <option value="">{{ allLabel }}</option>
+        @for (option of officeOptions(); track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+        @if (missingOffice()) {
+          <option [value]="state().officeAddress" disabled>{{ state().officeAddress }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="flex items-end">
+      <button
+        type="button"
+        (click)="clear()"
+        [disabled]="!hasActiveFilters()"
+        class="w-full cursor-pointer rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Clear filters
+      </button>
+    </div>
+  </div>
+</div>

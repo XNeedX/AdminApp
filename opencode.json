@@ -1,0 +1,13 @@
+{
+  "mcp": {
+    "servers": {
+      "context7": {
+        "type": "local",
+        "command": [
+          "npx",
+          "@upstash/context7-mcp"
+        ]
+      }
+    }
+  }
+}
