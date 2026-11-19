@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, firstValueFrom, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { OfficesService as AppointmentsOfficesService } from '../../../api/generated/appointments/services/offices.service';
+import { OfficesService } from '../../../api/generated/offices/services/offices.service';
 import { ServicesService as AppointmentsServicesService } from '../../../api/generated/appointments/services/services.service';
 import { DoctorsService as ProfilesDoctorsService } from '../../../api/generated/profiles/services/doctors.service';
 import { SpecializationService } from '../../../api/generated/services/services/specialization.service';
@@ -79,7 +79,7 @@ describe('AppointmentCatalogService scheduling catalog', () => {
     TestBed.configureTestingModule({
       providers: [
         AppointmentCatalogService,
-        { provide: AppointmentsOfficesService, useValue: api },
+        { provide: OfficesService, useValue: api },
         { provide: ProfilesDoctorsService, useValue: api },
         { provide: SpecializationService, useValue: api },
         { provide: AppointmentsServicesService, useValue: api },

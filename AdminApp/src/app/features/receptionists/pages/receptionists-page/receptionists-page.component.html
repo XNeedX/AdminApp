@@ -1,0 +1,28 @@
+<section class="space-y-6">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Receptionists</h1>
+      <p class="mt-1 text-sm text-gray-500">
+        Clinic front-desk staff, their contact profiles and assigned offices.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="openCreateDialog()"
+      class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+    >
+      Create receptionist
+    </button>
+  </header>
+
+  <app-receptionist-table
+    [rows]="rows()"
+    [isLoading]="isLoading()"
+    [loadError]="loadError()"
+    [deletingId]="deletingId()"
+    (profileRequested)="openProfile($event)"
+    (deleteRequested)="requestDelete($event)"
+    (retryRequested)="reload()"
+  />
+</section>

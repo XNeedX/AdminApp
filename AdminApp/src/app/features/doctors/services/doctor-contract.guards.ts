@@ -47,6 +47,8 @@ export interface OfficeCatalogItem {
   readonly id: string;
   /** Present when the backend supplies an address; callers fall back to the id. */
   readonly address?: string;
+  readonly fullAddress?: string;
+  readonly status?: string | number;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -138,4 +140,28 @@ export function isOfficeList(value: unknown): value is readonly OfficeCatalogIte
     Array.isArray(value) &&
     value.every((item) => isRecord(item) && readString(item, 'id') !== null)
   );
+}
+
+function isOfficeCatalogItem(value: unknown): value is OfficeCatalogItem {
+  return isRecord(value) && readString(value, 'id') !== null;
+}
+
+/** Extracts offices from either a paged response, an envelope, or a direct array. */
+export function extractOfficeList(value: unknown): readonly OfficeCatalogItem[] {
+  if (Array.isArray(value)) {
+    return value.filter(isOfficeCatalogItem);
+  }
+  if (isRecord(value)) {
+    const target = 'data' in value && value['data'] !== null ? value['data'] : value;
+    if (Array.isArray(target)) {
+      return target.filter(isOfficeCatalogItem);
+    }
+    if (isRecord(target)) {
+      const items = target['items'];
+      if (Array.isArray(items)) {
+        return items.filter(isOfficeCatalogItem);
+      }
+    }
+  }
+  return [];
 }

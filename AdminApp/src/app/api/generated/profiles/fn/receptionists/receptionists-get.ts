@@ -7,13 +7,14 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
+import { ApiResponseOfPagedResultOfReceptionistProfileDto } from '../../models/api-response-of-paged-result-of-receptionist-profile-dto';
 
 export interface ReceptionistsGet$Params {
   page?: number;
   pageSize?: number;
 }
 
-export function receptionistsGet(http: HttpClient, rootUrl: string, params?: ReceptionistsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+export function receptionistsGet(http: HttpClient, rootUrl: string, params?: ReceptionistsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponseOfPagedResultOfReceptionistProfileDto>> {
   const rb = new RequestBuilder(rootUrl, receptionistsGet.PATH, 'get');
   if (params) {
     rb.query('page', params.page, {});
@@ -21,11 +22,11 @@ export function receptionistsGet(http: HttpClient, rootUrl: string, params?: Rec
   }
 
   return http.request(
-    rb.build({ responseType: 'text', accept: '*/*', context })
+    rb.build({ responseType: 'json', accept: 'application/json', context })
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return (r as HttpResponse<any>).clone({ body: undefined }) as StrictHttpResponse<void>;
+      return r as StrictHttpResponse<ApiResponseOfPagedResultOfReceptionistProfileDto>;
     })
   );
 }

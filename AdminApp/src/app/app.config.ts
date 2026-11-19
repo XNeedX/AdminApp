@@ -5,6 +5,8 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { provideServicesApi } from './api/services-api.provider';
 import { provideAppointmentsApiConfiguration } from './api/appointments-api.provider';
+import { provideDocumentsApiConfiguration } from './api/documents-api.provider';
+import { provideOfficesApiConfiguration } from './api/offices-api.provider';
 import { provideProfilesApiConfiguration } from './api/profiles-api.provider';
 import { apiErrorInterceptor } from './core/interceptors/api-error.interceptor';
 import { authErrorInterceptor } from './core/interceptors/auth-error.interceptor';
@@ -25,5 +27,7 @@ export const appConfig: ApplicationConfig = {
     provideServicesApi(),
     provideAppointmentsApiConfiguration(),
     provideProfilesApiConfiguration(),
+    provideDocumentsApiConfiguration(),
+    provideOfficesApiConfiguration(),
   ],
 };

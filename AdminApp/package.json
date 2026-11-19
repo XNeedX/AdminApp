@@ -9,7 +9,9 @@
     "test": "ng test",
     "api:services": "node scripts/augment-services-openapi.mjs && ng-openapi-gen",
     "api:appointments": "node scripts/augment-appointments-openapi.mjs && ng-openapi-gen --config ng-openapi-gen.appointments.json",
-    "api:profiles": "node scripts/augment-profiles-openapi.mjs && ng-openapi-gen --config ng-openapi-gen.profiles.json"
+    "api:profiles": "node scripts/augment-profiles-openapi.mjs && ng-openapi-gen --config ng-openapi-gen.profiles.json",
+    "api:documents": "node scripts/augment-documents-openapi.mjs && ng-openapi-gen --config ng-openapi-gen.documents.json",
+    "api:offices": "node scripts/augment-offices-openapi.mjs && ng-openapi-gen --config ng-openapi-gen.offices.json"
   },
   "private": true,
   "packageManager": "npm@11.6.0",

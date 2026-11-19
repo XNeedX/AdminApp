@@ -7,23 +7,24 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
+import { ApiResponse } from '../../models/api-response';
 
 export interface ReceptionistsIdDelete$Params {
   id: string;
 }
 
-export function receptionistsIdDelete(http: HttpClient, rootUrl: string, params: ReceptionistsIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+export function receptionistsIdDelete(http: HttpClient, rootUrl: string, params: ReceptionistsIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponse>> {
   const rb = new RequestBuilder(rootUrl, receptionistsIdDelete.PATH, 'delete');
   if (params) {
     rb.path('id', params.id, {});
   }
 
   return http.request(
-    rb.build({ responseType: 'text', accept: '*/*', context })
+    rb.build({ responseType: 'json', accept: 'application/json', context })
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return (r as HttpResponse<any>).clone({ body: undefined }) as StrictHttpResponse<void>;
+      return r as StrictHttpResponse<ApiResponse>;
     })
   );
 }

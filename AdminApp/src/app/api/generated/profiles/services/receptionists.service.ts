@@ -10,6 +10,10 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
+import { ApiResponse } from '../models/api-response';
+import { ApiResponseOfGuid } from '../models/api-response-of-guid';
+import { ApiResponseOfPagedResultOfReceptionistProfileDto } from '../models/api-response-of-paged-result-of-receptionist-profile-dto';
+import { ApiResponseOfReceptionistProfileDto } from '../models/api-response-of-receptionist-profile-dto';
 import { receptionistsGet } from '../fn/receptionists/receptionists-get';
 import { ReceptionistsGet$Params } from '../fn/receptionists/receptionists-get';
 import { receptionistsIdDelete } from '../fn/receptionists/receptionists-id-delete';
@@ -36,7 +40,7 @@ export class ReceptionistsService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  receptionistsGet$Response(params?: ReceptionistsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  receptionistsGet$Response(params?: ReceptionistsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponseOfPagedResultOfReceptionistProfileDto>> {
     const obs = receptionistsGet(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -47,10 +51,10 @@ export class ReceptionistsService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  receptionistsGet(params?: ReceptionistsGet$Params, context?: HttpContext): Observable<void> {
+  receptionistsGet(params?: ReceptionistsGet$Params, context?: HttpContext): Observable<ApiResponseOfPagedResultOfReceptionistProfileDto> {
     const resp = this.receptionistsGet$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
+      map((r: StrictHttpResponse<ApiResponseOfPagedResultOfReceptionistProfileDto>): ApiResponseOfPagedResultOfReceptionistProfileDto => r.body)
     );
   }
 
@@ -63,7 +67,7 @@ export class ReceptionistsService extends BaseService {
    *
    * This method sends `application/*+json` and handles request body of type `application/*+json`.
    */
-  receptionistsPost$Response(params?: ReceptionistsPost$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  receptionistsPost$Response(params?: ReceptionistsPost$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponseOfGuid>> {
     const obs = receptionistsPost(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -74,10 +78,10 @@ export class ReceptionistsService extends BaseService {
    *
    * This method sends `application/*+json` and handles request body of type `application/*+json`.
    */
-  receptionistsPost(params?: ReceptionistsPost$Params, context?: HttpContext): Observable<void> {
+  receptionistsPost(params?: ReceptionistsPost$Params, context?: HttpContext): Observable<ApiResponseOfGuid> {
     const resp = this.receptionistsPost$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
+      map((r: StrictHttpResponse<ApiResponseOfGuid>): ApiResponseOfGuid => r.body)
     );
   }
 
@@ -90,7 +94,7 @@ export class ReceptionistsService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  receptionistsIdGet$Response(params: ReceptionistsIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  receptionistsIdGet$Response(params: ReceptionistsIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponseOfReceptionistProfileDto>> {
     const obs = receptionistsIdGet(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -101,10 +105,10 @@ export class ReceptionistsService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  receptionistsIdGet(params: ReceptionistsIdGet$Params, context?: HttpContext): Observable<void> {
+  receptionistsIdGet(params: ReceptionistsIdGet$Params, context?: HttpContext): Observable<ApiResponseOfReceptionistProfileDto> {
     const resp = this.receptionistsIdGet$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
+      map((r: StrictHttpResponse<ApiResponseOfReceptionistProfileDto>): ApiResponseOfReceptionistProfileDto => r.body)
     );
   }
 
@@ -117,7 +121,7 @@ export class ReceptionistsService extends BaseService {
    *
    * This method sends `application/*+json` and handles request body of type `application/*+json`.
    */
-  receptionistsIdPut$Response(params: ReceptionistsIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  receptionistsIdPut$Response(params: ReceptionistsIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponse>> {
     const obs = receptionistsIdPut(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -128,10 +132,10 @@ export class ReceptionistsService extends BaseService {
    *
    * This method sends `application/*+json` and handles request body of type `application/*+json`.
    */
-  receptionistsIdPut(params: ReceptionistsIdPut$Params, context?: HttpContext): Observable<void> {
+  receptionistsIdPut(params: ReceptionistsIdPut$Params, context?: HttpContext): Observable<ApiResponse> {
     const resp = this.receptionistsIdPut$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
+      map((r: StrictHttpResponse<ApiResponse>): ApiResponse => r.body)
     );
   }
 
@@ -144,7 +148,7 @@ export class ReceptionistsService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  receptionistsIdDelete$Response(params: ReceptionistsIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  receptionistsIdDelete$Response(params: ReceptionistsIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponse>> {
     const obs = receptionistsIdDelete(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -155,10 +159,10 @@ export class ReceptionistsService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  receptionistsIdDelete(params: ReceptionistsIdDelete$Params, context?: HttpContext): Observable<void> {
+  receptionistsIdDelete(params: ReceptionistsIdDelete$Params, context?: HttpContext): Observable<ApiResponse> {
     const resp = this.receptionistsIdDelete$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
+      map((r: StrictHttpResponse<ApiResponse>): ApiResponse => r.body)
     );
   }
 

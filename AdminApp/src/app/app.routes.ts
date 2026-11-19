@@ -33,6 +33,22 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'receptionists',
+        canActivate: [roleGuard('Receptionist')],
+        loadComponent: () =>
+          import(
+            './features/receptionists/pages/receptionists-page/receptionists-page.component'
+          ).then((m) => m.ReceptionistsPageComponent),
+      },
+      {
+        path: 'receptionists/:id/profile',
+        canActivate: [roleGuard('Receptionist')],
+        loadComponent: () =>
+          import(
+            './features/receptionists/pages/receptionist-profile-page/receptionist-profile-page.component'
+          ).then((m) => m.ReceptionistProfilePageComponent),
+      },
+      {
         path: 'doctors/:id/profile',
         canActivate: [roleGuard('Receptionist')],
         loadComponent: () =>

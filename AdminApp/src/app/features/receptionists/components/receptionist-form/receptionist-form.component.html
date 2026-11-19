@@ -1,0 +1,234 @@
+<section class="rounded-xl border border-gray-200 bg-white shadow-sm">
+  <header class="border-b border-gray-100 bg-gray-50 px-4 py-4 sm:px-6">
+    <h1 class="text-xl font-semibold text-gray-900">{{ title() }}</h1>
+    <p class="mt-1 text-sm text-gray-500">{{ subtitle() }}</p>
+  </header>
+
+  <form [formGroup]="form()" (ngSubmit)="onSubmit()" novalidate>
+    <div class="space-y-5 p-4 sm:p-6">
+      @if (formError(); as error) {
+        <div class="rounded-md border border-red-200 bg-red-50 p-4" role="alert">
+          <p class="text-sm font-medium text-red-800">{{ error }}</p>
+        </div>
+      }
+
+      <div class="flex flex-col gap-4 border-b border-gray-100 pb-6 sm:flex-row sm:items-center">
+        <div
+          class="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100"
+        >
+          @if (photoPreview()) {
+            <img
+              [src]="photoPreview()"
+              alt="Receptionist photo preview"
+              class="h-full w-full object-cover"
+            />
+          } @else {
+            <svg
+              class="h-10 w-10 text-gray-400"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+              />
+            </svg>
+          }
+        </div>
+        <div class="flex-1">
+          <label for="receptionist-photo" class="block text-sm font-medium text-gray-700">
+            Photo (optional)
+          </label>
+          <input
+            id="receptionist-photo"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            (change)="onPhotoSelected($event)"
+            [attr.aria-invalid]="isPhotoInvalid()"
+            [attr.aria-describedby]="isPhotoInvalid() ? 'receptionist-photo-error' : null"
+            class="mt-1 block w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+          />
+          @if (photoPreview()) {
+            <button
+              type="button"
+              (click)="photoCleared.emit()"
+              [disabled]="isSubmitting()"
+              class="mt-2 cursor-pointer text-sm font-medium text-red-600 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Remove photo
+            </button>
+          }
+          @if (photoError(); as error) {
+            <p id="receptionist-photo-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div>
+          <label for="receptionist-first-name" class="block text-sm font-medium text-gray-700">
+            First Name <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="receptionist-first-name"
+            type="text"
+            formControlName="firstName"
+            placeholder="John"
+            autocomplete="given-name"
+            required
+            [attr.maxlength]="maxNameLength"
+            [attr.aria-invalid]="isInvalid('firstName')"
+            [attr.aria-describedby]="
+              isInvalid('firstName') ? 'receptionist-first-name-error' : null
+            "
+            [class.border-red-500]="isInvalid('firstName')"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          @if (fieldError('firstName'); as error) {
+            <p id="receptionist-first-name-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="receptionist-last-name" class="block text-sm font-medium text-gray-700">
+            Last Name <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="receptionist-last-name"
+            type="text"
+            formControlName="lastName"
+            placeholder="Doe"
+            autocomplete="family-name"
+            required
+            [attr.maxlength]="maxNameLength"
+            [attr.aria-invalid]="isInvalid('lastName')"
+            [attr.aria-describedby]="isInvalid('lastName') ? 'receptionist-last-name-error' : null"
+            [class.border-red-500]="isInvalid('lastName')"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          @if (fieldError('lastName'); as error) {
+            <p id="receptionist-last-name-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="receptionist-middle-name" class="block text-sm font-medium text-gray-700">
+            Middle Name
+          </label>
+          <input
+            id="receptionist-middle-name"
+            type="text"
+            formControlName="middleName"
+            placeholder="Middle"
+            autocomplete="additional-name"
+            [attr.maxlength]="maxNameLength"
+            [attr.aria-invalid]="isInvalid('middleName')"
+            [attr.aria-describedby]="
+              isInvalid('middleName') ? 'receptionist-middle-name-error' : null
+            "
+            [class.border-red-500]="isInvalid('middleName')"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          @if (fieldError('middleName'); as error) {
+            <p id="receptionist-middle-name-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+          }
+        </div>
+      </div>
+
+      @if (!isEditMode()) {
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="receptionist-email" class="block text-sm font-medium text-gray-700">
+              E-mail <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="receptionist-email"
+              type="email"
+              formControlName="email"
+              placeholder="receptionist@clinic.org"
+              autocomplete="email"
+              required
+              [attr.maxlength]="maxEmailLength"
+              [attr.aria-invalid]="isInvalid('email')"
+              [attr.aria-describedby]="isInvalid('email') ? 'receptionist-email-error' : null"
+              [class.border-red-500]="isInvalid('email')"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            @if (fieldError('email'); as error) {
+              <p id="receptionist-email-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label for="receptionist-office" class="block text-sm font-medium text-gray-700">
+            Office <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <select
+            id="receptionist-office"
+            formControlName="officeText"
+            required
+            (change)="onOfficeChange($event)"
+            [attr.aria-invalid]="isOfficeInvalid()"
+            [attr.aria-describedby]="isOfficeInvalid() ? 'receptionist-office-error' : null"
+            [class.border-red-500]="isOfficeInvalid()"
+            class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">Select an office</option>
+            @for (office of offices(); track office.id) {
+              <option [value]="office.label">{{ office.label }}</option>
+            }
+          </select>
+          @if (officeError(); as error) {
+            <p id="receptionist-office-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+          }
+          @if (offices().length === 0) {
+            <p class="mt-1 text-xs text-gray-500">{{ noOfficesMessage }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <footer
+      class="flex flex-col-reverse items-stretch gap-3 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6"
+    >
+      <button
+        type="button"
+        (click)="onCancel()"
+        [disabled]="isSubmitting()"
+        class="cursor-pointer rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        [disabled]="!canSubmit() || isSubmitting()"
+        [attr.aria-busy]="isSubmitting()"
+        class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        @if (isSubmitting()) {
+          <svg
+            class="h-4 w-4 animate-spin text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+        }
+        {{ primaryLabel() }}
+      </button>
+    </footer>
+  </form>
+</section>

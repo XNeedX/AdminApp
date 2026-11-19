@@ -3,11 +3,11 @@ import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { readApiEnvelope } from '../../../api/api-envelope';
-import { OfficesService } from '../../../api/generated/appointments/services/offices.service';
+import { OfficesService } from '../../../api/generated/offices/services/offices.service';
 import { SpecializationsService } from '../../../api/generated/appointments/services/specializations.service';
 import { extractErrorMessage } from '../../../core/interceptors/api-error.interceptor';
 import { AutocompleteOption } from '../../../shared/components/autocomplete/autocomplete.model';
-import { isOfficeList, isSpecializationList } from './doctor-contract.guards';
+import { extractOfficeList, isSpecializationList } from './doctor-contract.guards';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
@@ -54,11 +54,11 @@ export class DoctorCatalogStore {
     try {
       const [specializationPayload, officePayload] = await Promise.all([
         firstValueFrom(this.specializationsService.specializationsGet()),
-        firstValueFrom(this.officesService.officesGet()),
+        firstValueFrom(this.officesService.officesGet({ Page: 1, PageSize: 200 })),
       ]);
 
       const specializations = readApiEnvelope(specializationPayload, isSpecializationList);
-      const offices = readApiEnvelope(officePayload, isOfficeList);
+      const offices = extractOfficeList(officePayload);
 
       this.specializations.set(
         specializations
@@ -67,7 +67,8 @@ export class DoctorCatalogStore {
       );
       this.offices.set(
         offices
-          .map((item) => ({ id: item.id, label: item.address ?? item.id }))
+          .filter((item) => item.status === undefined || item.status === 'Active' || item.status === 0)
+          .map((item) => ({ id: item.id, label: item.fullAddress ?? item.address ?? item.id }))
           .sort((left, right) => collator.compare(left.label, right.label))
       );
       this.loaded = true;

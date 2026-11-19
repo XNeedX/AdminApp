@@ -44,6 +44,24 @@ To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use th
 ng test
 ```
 
+## API client generation
+
+The clients under `src/app/api/generated/` are generated from the running microservice Swagger documents; never edit them by hand. Start the Profiles API and the Documents API, then run:
+
+```bash
+npm run api:profiles
+npm run api:documents
+```
+
+- `api:profiles` downloads `http://localhost:5154/swagger/v1/swagger.json`, applies `scripts/augment-profiles-openapi.mjs`, and regenerates `src/app/api/generated/profiles`.
+- `api:documents` downloads `http://localhost:5105/swagger/v1/swagger.json`, applies `scripts/augment-documents-openapi.mjs`, and regenerates `src/app/api/generated/documents`.
+
+Known prerequisites and coordination gaps (tracked by `specs/009-receptionist-management`):
+
+- **CG-1**: the live Profiles Swagger does not document the `GET /api/Receptionists` and `GET /api/Receptionists/{id}` response DTOs. `scripts/augment-profiles-openapi.mjs` supplies `ReceptionistProfileDTO` with an `id`, but the backend must actually return that `id`; otherwise the list and profile contract guards reject the payload.
+- **CG-2**: the receptionist operations only expose typed envelopes because of the overlay above. Re-run `api:profiles` whenever the backend publishes typed responses.
+- **CG-3**: the Documents API documents its actions as untyped `IActionResult`. `scripts/augment-documents-openapi.mjs` adds the `ApiResponseOfGuid` upload body and the `ApiResponse` delete acknowledgment until the backend publishes `[ProducesResponseType]`.
+
 ## Running end-to-end tests
 
 For end-to-end (e2e) testing, run:

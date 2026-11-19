@@ -4,7 +4,7 @@ import { catchError, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 
 import { readApiEnvelope } from '../../../api/api-envelope';
 import { Status as AppointmentsStatus } from '../../../api/generated/appointments/models/status';
-import { OfficesService as AppointmentsOfficesService } from '../../../api/generated/appointments/services/offices.service';
+import { OfficesService } from '../../../api/generated/offices/services/offices.service';
 import { ServicesService as AppointmentsServicesService } from '../../../api/generated/appointments/services/services.service';
 import { DoctorsService as ProfilesDoctorsService } from '../../../api/generated/profiles/services/doctors.service';
 import { Status as ServicesStatus } from '../../../api/generated/services/models/status';
@@ -24,8 +24,9 @@ const SPECIALIZATION_PAGE_SIZE = 100;
 /** Narrowed office row; generated DTO fields are optional, these are not. */
 interface OfficeRow {
   readonly id: string;
-  readonly address: string;
-  readonly status?: AppointmentsStatus;
+  readonly address?: string;
+  readonly fullAddress?: string;
+  readonly status?: AppointmentsStatus | string;
 }
 
 /** Narrowed ProfilesAPI doctor table row. */
@@ -75,12 +76,31 @@ function isOffice(value: unknown): value is OfficeRow {
   return (
     isRecord(value) &&
     typeof value['id'] === 'string' &&
-    typeof value['address'] === 'string'
+    (typeof value['address'] === 'string' || typeof value['fullAddress'] === 'string')
   );
 }
 
 function isOfficeList(value: unknown): value is readonly OfficeRow[] {
   return Array.isArray(value) && value.every(isOffice);
+}
+
+function extractOffices(payload: unknown): readonly OfficeRow[] {
+  if (Array.isArray(payload)) {
+    return payload.filter(isOffice);
+  }
+  if (isRecord(payload)) {
+    const target = 'data' in payload && payload['data'] !== null ? payload['data'] : payload;
+    if (Array.isArray(target)) {
+      return target.filter(isOffice);
+    }
+    if (isRecord(target)) {
+      const items = target['items'];
+      if (Array.isArray(items)) {
+        return items.filter(isOffice);
+      }
+    }
+  }
+  return [];
 }
 
 function isDoctorTableRow(value: unknown): value is DoctorRow {
@@ -166,7 +186,7 @@ function parseFullName(fullName: string): {
  */
 @Injectable({ providedIn: 'root' })
 export class AppointmentCatalogService {
-  private readonly officesApi = inject(AppointmentsOfficesService);
+  private readonly officesApi = inject(OfficesService);
   private readonly doctorsApi = inject(ProfilesDoctorsService);
   private readonly specializationsApi = inject(SpecializationService);
   private readonly schedulingServicesApi = inject(AppointmentsServicesService);
@@ -227,18 +247,24 @@ export class AppointmentCatalogService {
   }
 
   private loadOffices(): Observable<readonly OfficeOption[]> {
-    return this.officesApi.officesGet().pipe(
-      map((payload) => readApiEnvelope(payload, isOfficeList)),
+    return this.officesApi.officesGet({ Page: 1, PageSize: 200 }).pipe(
+      map((payload) => extractOffices(payload)),
       map((offices) =>
         offices
           .filter(
-            (office) => office.status === undefined || office.status === AppointmentsStatus.Active
+            (office) =>
+              office.status === undefined ||
+              office.status === AppointmentsStatus.Active ||
+              office.status === 'Active'
           )
-          .map((office) => ({
-            id: office.id,
-            address: office.address,
-            displayName: office.address,
-          }))
+          .map((office) => {
+            const address = office.fullAddress ?? office.address ?? office.id;
+            return {
+              id: office.id,
+              address,
+              displayName: address,
+            };
+          })
       )
     );
   }

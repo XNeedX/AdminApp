@@ -1,0 +1,62 @@
+<section class="rounded-xl border border-gray-200 bg-white shadow-sm">
+  @if (profile(); as receptionist) {
+    <header
+      class="flex flex-col gap-4 border-b border-gray-100 p-6 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div class="flex items-center gap-4">
+        <div
+          class="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100"
+        >
+          @if (photo(); as image) {
+            <img
+              [src]="image"
+              [alt]="receptionist.firstName + ' ' + receptionist.lastName"
+              class="h-full w-full object-cover"
+            />
+          } @else {
+            <span class="text-xl font-semibold text-gray-500" aria-hidden="true">
+              {{ initialsValue() }}
+            </span>
+          }
+        </div>
+
+        <div class="min-w-0">
+          <h1 class="truncate text-2xl font-bold text-gray-900">
+            {{ receptionist.firstName }} {{ receptionist.lastName }}
+          </h1>
+          <p class="mt-1 text-sm text-gray-500">Receptionist</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        (click)="edit.emit()"
+        class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+      >
+        Edit
+      </button>
+    </header>
+
+    <dl class="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">First name</dt>
+        <dd class="mt-1 text-sm text-gray-900">{{ receptionist.firstName }}</dd>
+      </div>
+
+      <div>
+        <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Last name</dt>
+        <dd class="mt-1 text-sm text-gray-900">{{ receptionist.lastName }}</dd>
+      </div>
+
+      <div>
+        <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Middle name</dt>
+        <dd class="mt-1 text-sm text-gray-900">{{ middleName() }}</dd>
+      </div>
+
+      <div>
+        <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Office</dt>
+        <dd class="mt-1 text-sm text-gray-900">{{ office() }}</dd>
+      </div>
+    </dl>
+  }
+</section>

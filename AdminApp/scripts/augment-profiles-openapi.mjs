@@ -79,6 +79,40 @@ function ensureSchemas(definition) {
   schemas.ApiResponse = envelopeSchema(null);
   schemas.ApiResponseOfGuid = envelopeSchema({ type: 'string', format: 'uuid' });
 
+  // Receptionist profile read model. `id` is required for row identity, profile
+  // navigation, and deletion; the backend DTO must expose it (gate CG-1).
+  schemas.ReceptionistProfileDTO ??= {
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      photoPath: { type: 'string', nullable: true },
+      firstName: { type: 'string' },
+      lastName: { type: 'string' },
+      middleName: { type: 'string', nullable: true },
+      officeAddress: { type: 'string' },
+    },
+    additionalProperties: false,
+  };
+
+  schemas.PagedResultOfReceptionistProfileDTO ??= {
+    type: 'object',
+    properties: {
+      data: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/ReceptionistProfileDTO' },
+      },
+      totalCount: { type: 'integer', format: 'int32' },
+    },
+    additionalProperties: false,
+  };
+
+  schemas.ApiResponseOfReceptionistProfileDTO = envelopeSchema({
+    $ref: '#/components/schemas/ReceptionistProfileDTO',
+  });
+  schemas.ApiResponseOfPagedResultOfReceptionistProfileDTO = envelopeSchema({
+    $ref: '#/components/schemas/PagedResultOfReceptionistProfileDTO',
+  });
+
   // Receptionist doctor table row: the only read model with status + office address.
   schemas.DoctorTableRowDTO ??= {
     type: 'object',
@@ -194,6 +228,43 @@ function rewriteResponses(definition) {
 
   if (doctorByIdPath?.put !== undefined) {
     doctorByIdPath.put.responses = {
+      200: jsonBody('#/components/schemas/ApiResponse'),
+      ...failureResponses(),
+    };
+  }
+
+  const receptionistCollectionPath = paths['/api/Receptionists'];
+  if (receptionistCollectionPath?.get !== undefined) {
+    receptionistCollectionPath.get.responses = {
+      200: jsonBody('#/components/schemas/ApiResponseOfPagedResultOfReceptionistProfileDTO'),
+      ...failureResponses(),
+    };
+  }
+
+  if (receptionistCollectionPath?.post !== undefined) {
+    receptionistCollectionPath.post.responses = {
+      200: jsonBody('#/components/schemas/ApiResponseOfGuid'),
+      ...failureResponses(),
+    };
+  }
+
+  const receptionistByIdPath = paths['/api/Receptionists/{id}'];
+  if (receptionistByIdPath?.get !== undefined) {
+    receptionistByIdPath.get.responses = {
+      200: jsonBody('#/components/schemas/ApiResponseOfReceptionistProfileDTO'),
+      ...failureResponses(),
+    };
+  }
+
+  if (receptionistByIdPath?.put !== undefined) {
+    receptionistByIdPath.put.responses = {
+      200: jsonBody('#/components/schemas/ApiResponse'),
+      ...failureResponses(),
+    };
+  }
+
+  if (receptionistByIdPath?.delete !== undefined) {
+    receptionistByIdPath.delete.responses = {
       200: jsonBody('#/components/schemas/ApiResponse'),
       ...failureResponses(),
     };

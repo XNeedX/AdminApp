@@ -48,14 +48,18 @@ function readFailureMessage(message: unknown, errors: readonly string[]): string
   return errors[0] ?? 'The server reported an unsuccessful response.';
 }
 
-function assertSuccessful(payload: unknown): Record<string, unknown> {
+function assertSuccessful(payload: unknown): unknown {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
   if (!isRecord(payload)) {
     throw new ApiContractError('The API response is not an object.');
   }
 
   const isSuccess = payload['isSuccess'];
 
-  if (isSuccess !== true) {
+  if (isSuccess === false) {
     const errors = readErrors(payload['errors']);
     throw new ApiContractError(readFailureMessage(payload['message'], errors), errors);
   }
@@ -64,17 +68,17 @@ function assertSuccessful(payload: unknown): Record<string, unknown> {
 }
 
 /**
- * Validates an envelope that carries data and returns the narrowed payload.
+ * Validates an envelope (or direct payload) that carries data and returns the narrowed payload.
  *
  * @param payload Raw body returned by a generated client.
- * @param guard Type guard for the `data` member.
+ * @param guard Type guard for the `data` member (or the raw payload when unenveloped).
  */
 export function readApiEnvelope<T>(
   payload: unknown,
   guard: (value: unknown) => value is T
 ): T {
-  const envelope = assertSuccessful(payload);
-  const data = envelope['data'];
+  const unwrapped = assertSuccessful(payload);
+  const data = isRecord(unwrapped) && 'data' in unwrapped ? unwrapped['data'] : unwrapped;
 
   if (!guard(data)) {
     throw new ApiContractError('The API returned an unexpected payload shape.');
