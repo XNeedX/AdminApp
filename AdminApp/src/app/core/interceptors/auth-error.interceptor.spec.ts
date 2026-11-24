@@ -1,11 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpContext,
+  HttpErrorResponse,
+  provideHttpClient,
+  withInterceptors,
+} from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { authErrorInterceptor } from './auth-error.interceptor';
 import { AuthService } from '../services/auth.service';
+import { SKIP_AUTH_REDIRECT } from '../tokens/skip-auth-redirect.token';
 import { environment } from '../../../environments/environment.development';
 
 describe('authErrorInterceptor', () => {
@@ -59,6 +66,25 @@ describe('authErrorInterceptor', () => {
     http.post(keycloakUrl, 'grant_type=password').subscribe({ error: () => undefined });
     httpMock.expectOne(keycloakUrl).flush({ error: 'invalid_grant' }, { status: 401, statusText: 'Unauthorized' });
 
+    expect(clearSession).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('does not clear the session or navigate on a Gateway 401 marked SKIP_AUTH_REDIRECT', () => {
+    let caught: unknown;
+
+    http
+      .get(`${environment.apiUrl}/profiles/doctors/account/acc-1`, {
+        context: new HttpContext().set(SKIP_AUTH_REDIRECT, true),
+      })
+      .subscribe({ error: (error: unknown) => (caught = error) });
+
+    httpMock
+      .expectOne(`${environment.apiUrl}/profiles/doctors/account/acc-1`)
+      .flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    expect(caught).toBeInstanceOf(HttpErrorResponse);
+    expect((caught as HttpErrorResponse).status).toBe(401);
     expect(clearSession).not.toHaveBeenCalled();
     expect(router.navigate).not.toHaveBeenCalled();
   });

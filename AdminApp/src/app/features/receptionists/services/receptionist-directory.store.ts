@@ -2,7 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { readApiAcknowledgment, readApiEnvelope } from '../../../api/api-envelope';
+import {
+  ApiContractError,
+  readApiAcknowledgment,
+  readApiEnvelope,
+} from '../../../api/api-envelope';
 import { ReceptionistsService } from '../../../api/generated/profiles/services/receptionists.service';
 import { extractErrorMessage } from '../../../core/interceptors/api-error.interceptor';
 import { ReceptionistProfile, ReceptionistRow } from '../models/receptionist.model';
@@ -11,6 +15,10 @@ import { isPagedReceptionistRows } from './receptionist-contract.guards';
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 50;
+
+/** Shown when a page does not match the expected contract but earlier pages were loaded. */
+const CONTRACT_ERROR_MESSAGE =
+  'The receptionists service returned an unexpected response. Some entries may be missing.';
 
 /**
  * Single owner of the receptionist directory.
@@ -69,34 +77,45 @@ export class ReceptionistDirectoryStore {
     }
   }
 
+  /**
+   * Fetches every page. Each page is validated and handled on its own so a contract
+   * mismatch (or transport failure) on one page keeps the pages already loaded and is
+   * reported as an error, instead of collapsing the table into a misleading empty state.
+   */
   private async fetchAll(): Promise<void> {
     const collected: ReceptionistProfile[] = [];
+    let failure: string | null = null;
+    let page = 1;
+    let totalCount = 0;
 
-    try {
-      let page = 1;
-      let totalCount = 0;
+    do {
+      let result: { readonly data: readonly ReceptionistProfile[]; readonly totalCount: number };
 
-      do {
+      try {
         const payload = await firstValueFrom(
           this.receptionists.receptionistsGet({ page, pageSize: PAGE_SIZE }),
         );
-        const result = readApiEnvelope(payload, isPagedReceptionistRows);
+        result = readApiEnvelope(payload, isPagedReceptionistRows);
+      } catch (error: unknown) {
+        failure =
+          error instanceof ApiContractError
+            ? contractFailureMessage(error, collected.length)
+            : toErrorMessage(error);
+        break;
+      }
 
-        collected.push(...result.data);
-        totalCount = result.totalCount;
+      collected.push(...result.data);
+      totalCount = result.totalCount;
 
-        if (result.data.length === 0) {
-          break;
-        }
+      if (result.data.length === 0) {
+        break;
+      }
 
-        page += 1;
-      } while (collected.length < totalCount && page <= MAX_PAGES);
+      page += 1;
+    } while (collected.length < totalCount && page <= MAX_PAGES);
 
-      this.rows.set(collected.map(toRow));
-    } catch (error: unknown) {
-      this.rows.set([]);
-      this.loadError.set(toErrorMessage(error));
-    }
+    this.rows.set(collected.map(toRow));
+    this.loadError.set(failure);
   }
 }
 
@@ -107,6 +126,19 @@ function toRow(profile: ReceptionistProfile): ReceptionistRow {
     officeAddress: profile.officeAddress,
     photoPath: profile.photoPath,
   };
+}
+
+/**
+ * Message for a page that failed validation. `ApiContractError` covers both a server
+ * `isSuccess: false` (which carries a useful backend message) and a genuinely malformed
+ * payload; with rows already collected the message must say the list is partial.
+ */
+function contractFailureMessage(error: ApiContractError, rowsAlreadyLoaded: number): string {
+  if (rowsAlreadyLoaded > 0) {
+    return CONTRACT_ERROR_MESSAGE;
+  }
+
+  return error.message;
 }
 
 function toErrorMessage(error: unknown): string {

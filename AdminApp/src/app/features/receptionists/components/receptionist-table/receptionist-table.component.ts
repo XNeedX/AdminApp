@@ -20,7 +20,7 @@ export class ReceptionistTableComponent {
   readonly deleteRequested = output<ReceptionistRow>();
   readonly retryRequested = output<void>();
 
-  protected displayOffice(value: string): string {
+  protected displayOffice(value: string | null): string {
     return officeLabel(value);
   }
 

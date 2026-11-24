@@ -10,6 +10,7 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
+import { ApiResponseOfIEnumerableOfPatientProfileDto } from '../models/api-response-of-i-enumerable-of-patient-profile-dto';
 import { ApiResponseOfPatientProfileDto } from '../models/api-response-of-patient-profile-dto';
 import { patientsAccountAccountIdGet } from '../fn/patients/patients-account-account-id-get';
 import { PatientsAccountAccountIdGet$Params } from '../fn/patients/patients-account-account-id-get';
@@ -17,6 +18,8 @@ import { patientsConfirmPost } from '../fn/patients/patients-confirm-post';
 import { PatientsConfirmPost$Params } from '../fn/patients/patients-confirm-post';
 import { patientsForceCreatePost } from '../fn/patients/patients-force-create-post';
 import { PatientsForceCreatePost$Params } from '../fn/patients/patients-force-create-post';
+import { patientsGet } from '../fn/patients/patients-get';
+import { PatientsGet$Params } from '../fn/patients/patients-get';
 import { patientsIdGet } from '../fn/patients/patients-id-get';
 import { PatientsIdGet$Params } from '../fn/patients/patients-id-get';
 import { patientsProfileIdLinkPost } from '../fn/patients/patients-profile-id-link-post';
@@ -160,6 +163,33 @@ export class PatientsService extends BaseService {
     const resp = this.patientsIdGet$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<ApiResponseOfPatientProfileDto>): ApiResponseOfPatientProfileDto => r.body)
+    );
+  }
+
+  /** Path part for operation `patientsGet()` */
+  static readonly PatientsGetPath = '/Patients';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `patientsGet()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  patientsGet$Response(params?: PatientsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponseOfIEnumerableOfPatientProfileDto>> {
+    const obs = patientsGet(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `patientsGet$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  patientsGet(params?: PatientsGet$Params, context?: HttpContext): Observable<ApiResponseOfIEnumerableOfPatientProfileDto> {
+    const resp = this.patientsGet$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<ApiResponseOfIEnumerableOfPatientProfileDto>): ApiResponseOfIEnumerableOfPatientProfileDto => r.body)
     );
   }
 

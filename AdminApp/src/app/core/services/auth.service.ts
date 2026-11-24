@@ -6,6 +6,7 @@ import { Observable, catchError, map, of, switchMap, timeout } from 'rxjs';
 
 import { environment } from '../../../environments/environment.development';
 import { SILENT_HTTP_ERROR } from '../tokens/silent-http-error.token';
+import { SKIP_AUTH_REDIRECT } from '../tokens/skip-auth-redirect.token';
 import {
   AUTH_SESSION_STORAGE_KEY,
   AuthRole,
@@ -224,7 +225,11 @@ export class AuthService {
 
     return this.http
       .get<unknown>(url, {
-        context: new HttpContext().set(SILENT_HTTP_ERROR, true),
+        // This probe runs *during* sign-in and handles its own failures; a 401 here must
+        // not be mistaken for a session rejection by the global auth-error interceptor.
+        context: new HttpContext()
+          .set(SILENT_HTTP_ERROR, true)
+          .set(SKIP_AUTH_REDIRECT, true),
       })
       .pipe(
         timeout(PROFILE_REQUEST_TIMEOUT_MS),
@@ -266,6 +271,16 @@ export class AuthService {
             this.warnOnce(
               'keycloak-grant',
               'Keycloak client is not allowed for direct access grants. Enable directAccessGrantsEnabled or use a dedicated client.'
+            );
+          }
+
+          // A user still holding a required action (e.g. UPDATE_PASSWORD) gets a generic
+          // "incorrect credentials" message in the UI by design; surface the real cause to
+          // developers only, and never echo Keycloak's error_description.
+          if (payload.error === 'invalid_grant') {
+            this.warnOnce(
+              'account-not-set-up',
+              'Keycloak rejected the credentials. If they are correct, the account is not fully set up (complete required actions such as UPDATE_PASSWORD).'
             );
           }
         }

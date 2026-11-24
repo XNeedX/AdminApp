@@ -8,7 +8,9 @@
  * match the backend DTOs and normalizes query parameter names.
  *
  * Patient search (`GET /api/Patients?search=…`) does not exist in the backend yet
- * (gate P-2); this script intentionally does not invent it.
+ * (gate P-2); this script intentionally does not invent it. The backend does expose
+ * `GET /api/Patients` (roles Doctor/Receptionist, no query parameters), which is
+ * documented here as the receptionist patient collection; search is applied client-side.
  *
  * Usage: node scripts/augment-profiles-openapi.mjs [sourceUrlOrFile]
  */
@@ -139,9 +141,12 @@ function ensureSchemas(definition) {
     additionalProperties: false,
   };
 
+  // Patient read model. `id` is required for selection and profile navigation and is
+  // present on the backend `PatientProfileDto` (PatientMapper maps `PatientProfile.Id`).
   schemas.PatientProfileDTO ??= {
     type: 'object',
     properties: {
+      id: { type: 'string', format: 'uuid' },
       photoPath: { type: 'string', nullable: true },
       firstName: { type: 'string' },
       lastName: { type: 'string' },
@@ -157,6 +162,12 @@ function ensureSchemas(definition) {
   });
   schemas.ApiResponseOfPatientProfileDTO = envelopeSchema({
     $ref: '#/components/schemas/PatientProfileDTO',
+  });
+  // Collection read model for the receptionist patient picker. The backend returns
+  // `Result<IEnumerable<PatientProfileDto>>` with no paging or search parameters.
+  schemas.ApiResponseOfIEnumerableOfPatientProfileDTO = envelopeSchema({
+    type: 'array',
+    items: { $ref: '#/components/schemas/PatientProfileDTO' },
   });
 
   // Full doctor profile used by the edit form. The backend `DoctorDetailsDto`
@@ -196,6 +207,16 @@ function rewriteResponses(definition) {
   if (patientByIdPath?.get !== undefined) {
     patientByIdPath.get.responses = {
       200: jsonBody('#/components/schemas/ApiResponseOfPatientProfileDTO'),
+      ...failureResponses(),
+    };
+  }
+
+  // Receptionist patient lookup (`GET /api/Patients`, roles Doctor/Receptionist).
+  // Search is applied client-side: the backend action takes no query parameters.
+  const patientCollectionPath = paths['/api/Patients'];
+  if (patientCollectionPath?.get !== undefined) {
+    patientCollectionPath.get.responses = {
+      200: jsonBody('#/components/schemas/ApiResponseOfIEnumerableOfPatientProfileDTO'),
       ...failureResponses(),
     };
   }

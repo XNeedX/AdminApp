@@ -62,8 +62,10 @@ function row(id: string, doctorFullName: string): AppointmentRow {
 describe('AppointmentFiltersService', () => {
   const service = new AppointmentFiltersService();
 
-  it('serializes the date as yyyy-MM-dd', () => {
-    expect(service.toParams(state({ date: '2026-12-01' }), LOOKUPS).date).toBe('2026-12-01');
+  it('serializes the date as a UTC midnight timestamp', () => {
+    expect(service.toParams(state({ date: '2026-12-01' }), LOOKUPS).date).toBe(
+      '2026-12-01T00:00:00Z'
+    );
   });
 
   it('omits isApproved for the All status', () => {
@@ -106,7 +108,7 @@ describe('AppointmentFiltersService', () => {
     );
 
     expect(params).toEqual({
-      date: '2026-11-21',
+      date: '2026-11-21T00:00:00Z',
       doctorName: 'Ivanov',
       serviceName: 'ECG',
       isApproved: false,

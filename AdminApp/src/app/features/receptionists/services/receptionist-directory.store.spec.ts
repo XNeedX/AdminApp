@@ -130,6 +130,39 @@ describe('ReceptionistDirectoryStore', () => {
     expect(store.loadError()).not.toBeNull();
   });
 
+  it('keeps the rows of earlier pages when a later page breaks the contract', async () => {
+    receptionistsGet.mockImplementation((params: { page?: number } = {}) => {
+      const page = params.page ?? 1;
+
+      if (page === 1) {
+        return of(pageOf(PROFILES.slice(0, 1), PROFILES.length));
+      }
+
+      // Page 2 carries a row without an id: `readApiEnvelope` rejects the whole page.
+      return of(pageOf([{ ...PROFILES[1], id: '' }], PROFILES.length));
+    });
+
+    await load();
+
+    expect(store.rows().map((row) => row.id)).toEqual(['r1']);
+    expect(store.loadError()).toBe(
+      'The receptionists service returned an unexpected response. Some entries may be missing.'
+    );
+    expect(store.isLoading()).toBe(false);
+  });
+
+  it('renders a receptionist without an office as a null address', async () => {
+    receptionistsGet.mockReturnValue(
+      of(pageOf([{ ...PROFILES[0], officeAddress: undefined as unknown as string }], 1)),
+    );
+
+    await load();
+
+    expect(store.rows()).toHaveLength(1);
+    expect(store.rows()[0].officeAddress).toBeNull();
+    expect(store.loadError()).toBeNull();
+  });
+
   it('shares one in-flight load between overlapping calls', async () => {
     const pending = new Subject<unknown>();
     receptionistsGet.mockReturnValue(pending.asObservable());

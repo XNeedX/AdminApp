@@ -1,13 +1,15 @@
 ---
+name: speckit-bug-assess
 description: Assess a bug report (pasted text or URL) against the codebase and produce an assessment with possible remediation
+compatibility: Requires spec-kit project structure with .specify/ directory
+metadata:
+  author: spec-kit-core
+  source: bug:commands/speckit.bug.assess.md
 ---
 
-
-<!-- Extension: bug -->
-<!-- Config: .specify/extensions/bug/ -->
 # Assess Bug
 
-Triage a bug report against the current codebase: understand the symptom, locate the suspected root cause, judge severity, and propose a remediation. The output is a single assessment file at `.specify/bugs/<slug>/assessment.md` that downstream commands (`/speckit.bug.fix`, `/speckit.bug.test`) consume.
+Triage a bug report against the current codebase: understand the symptom, locate the suspected root cause, judge severity, and propose a remediation. The output is a single assessment file at `.specify/bugs/<slug>/assessment.md` that downstream commands (`/speckit-bug-fix`, `/speckit-bug-test`) consume.
 
 ## User Input
 
@@ -135,7 +137,7 @@ By this point `BUG_SLUG` and `BUG_DIR` have been resolved, so a hook command run
 
 5. **Propose a remediation**
    - Outline one preferred fix and, if non-obvious, one or two alternatives with trade-offs.
-   - Identify files to change and the shape of the change (without writing the patch yet — that is `/speckit.bug.fix`'s job).
+   - Identify files to change and the shape of the change (without writing the patch yet — that is `/speckit-bug-fix`'s job).
    - Call out tests that should exist or be added to lock the fix in.
    - Flag risks: API breakage, migrations, performance, security, observability.
 
@@ -246,7 +248,7 @@ Check if `.specify/extensions.yml` exists in the project root.
 - The slug used and whether it was user-provided, asked-for, or auto-generated. State it on its own line (e.g. `Slug: <BUG_SLUG>`) so it is easy to spot — downstream commands in the same session may reuse it from context without re-prompting.
 - The path `.specify/bugs/<BUG_SLUG>/assessment.md`.
 - The verdict and severity.
-- The next suggested step: `/speckit.bug.fix slug=<BUG_SLUG>`.
+- The next suggested step: `/speckit-bug-fix slug=<BUG_SLUG>`.
 
 ## Guardrails
 

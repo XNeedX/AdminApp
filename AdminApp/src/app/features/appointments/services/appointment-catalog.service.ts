@@ -7,6 +7,8 @@ import { Status as AppointmentsStatus } from '../../../api/generated/appointment
 import { OfficesService } from '../../../api/generated/offices/services/offices.service';
 import { ServicesService as AppointmentsServicesService } from '../../../api/generated/appointments/services/services.service';
 import { DoctorsService as ProfilesDoctorsService } from '../../../api/generated/profiles/services/doctors.service';
+import { PatientProfileDto } from '../../../api/generated/profiles/models/patient-profile-dto';
+import { PatientsService as ProfilesPatientsService } from '../../../api/generated/profiles/services/patients.service';
 import { Status as ServicesStatus } from '../../../api/generated/services/models/status';
 import { SpecializationService } from '../../../api/generated/services/services/specialization.service';
 import { DoctorStatus, isDoctorStatus } from '../../doctors/models/doctor-form.model';
@@ -14,6 +16,7 @@ import {
   AppointmentCatalogs,
   DoctorOption,
   OfficeOption,
+  PatientOption,
   ServiceOption,
   SpecializationOption,
 } from '../models/appointment-catalog.model';
@@ -72,16 +75,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+/** Names the catalog source whose request or response validation failed. */
+export type CatalogSource = 'offices' | 'doctors' | 'patients' | 'specializations' | 'services';
+
+export class CatalogSourceError extends Error {
+  readonly source: CatalogSource;
+
+  constructor(source: CatalogSource, cause: unknown) {
+    super(`Could not load ${source}.`);
+    this.name = 'CatalogSourceError';
+    this.source = source;
+    this.cause = cause;
+  }
+}
+
 function isOffice(value: unknown): value is OfficeRow {
   return (
     isRecord(value) &&
     typeof value['id'] === 'string' &&
     (typeof value['address'] === 'string' || typeof value['fullAddress'] === 'string')
   );
-}
-
-function isOfficeList(value: unknown): value is readonly OfficeRow[] {
-  return Array.isArray(value) && value.every(isOffice);
 }
 
 function extractOffices(payload: unknown): readonly OfficeRow[] {
@@ -118,7 +131,6 @@ function isDoctorPage(value: unknown): value is { readonly data?: readonly Docto
   if (!isRecord(value) || !Array.isArray(value['data'])) {
     return false;
   }
-
   return value['data'].every(isDoctorTableRow);
 }
 
@@ -130,7 +142,6 @@ function isSpecializationListPage(value: unknown): value is SpecializationPage {
   if (!isRecord(value) || !Array.isArray(value['items'])) {
     return false;
   }
-
   return value['items'].every(isSpecializationRow);
 }
 
@@ -146,22 +157,42 @@ function isSchedulingServiceList(value: unknown): value is readonly SchedulingSe
   return Array.isArray(value) && value.every(isSchedulingServiceRow);
 }
 
+/** A patient row is usable only with an id and both names; the rest is optional. */
+function isPatientRow(value: unknown): value is PatientProfileDto {
+  return (
+    isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['firstName'] === 'string' &&
+    typeof value['lastName'] === 'string'
+  );
+}
+
+function isPatientList(value: unknown): value is readonly PatientProfileDto[] {
+  return Array.isArray(value) && value.every(isPatientRow);
+}
+
 function isSpecializationDetail(value: unknown): value is SpecializationDetail {
   if (!isRecord(value) || typeof value['id'] !== 'string') {
     return false;
   }
-
   const services = value['services'];
-
   return services === undefined || (Array.isArray(services) && services.every(isServiceRow));
 }
 
-/** Normalizes an address so doctor→office matching ignores case and extra spacing. */
 function normalizeAddress(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-/** `DoctorTableRowDto.FullName` is `First Last Middle`. */
+function toPatientOption(row: PatientProfileDto): PatientOption {
+  return {
+    id: row.id ?? '',
+    fullName: [row.firstName, row.lastName, row.middleName]
+      .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
+      .join(' '),
+    phoneNumber: row.phoneNumber ?? '',
+  };
+}
+
 function parseFullName(fullName: string): {
   readonly firstName: string;
   readonly lastName: string;
@@ -171,30 +202,20 @@ function parseFullName(fullName: string): {
   const firstName = tokens[0] ?? '';
   const lastName = tokens[1] ?? '';
   const middleName = tokens.length > 2 ? tokens.slice(2).join(' ') : null;
-
   return { firstName, lastName, middleName };
 }
 
-/**
- * Loads and caches the catalogs the appointment form and filters need.
- *
- * Every request goes through a generated client. Doctor status and office come from the
- * ProfilesAPI receptionist table (the only authoritative source); appointments offices
- * supply the ids used by create/list; specialization→service links come from the
- * Services API. The Appointments API `/Services` catalog is also read so the form can
- * tell a schedulable service apart from one the schedule endpoint does not know about.
- */
 @Injectable({ providedIn: 'root' })
 export class AppointmentCatalogService {
   private readonly officesApi = inject(OfficesService);
   private readonly doctorsApi = inject(ProfilesDoctorsService);
+  private readonly patientsApi = inject(ProfilesPatientsService);
   private readonly specializationsApi = inject(SpecializationService);
   private readonly schedulingServicesApi = inject(AppointmentsServicesService);
 
   private cached: AppointmentCatalogs | null = null;
   private pending: Observable<AppointmentCatalogs> | null = null;
 
-  /** Catalogs for the session; pass `force` to bypass the cache after a failure. */
   load(force = false): Observable<AppointmentCatalogs> {
     if (!force && this.cached !== null) {
       return of(this.cached);
@@ -207,23 +228,24 @@ export class AppointmentCatalogService {
     const request$ = forkJoin({
       offices: this.loadOffices(),
       doctors: this.loadDoctorRows(),
+      patients: this.loadPatients(),
       specializations: this.loadSpecializations(),
       schedulableServiceIds: this.loadSchedulableServiceIds(),
     }).pipe(
-      switchMap(({ offices, doctors, specializations, schedulableServiceIds }) =>
+      switchMap(({ offices, doctors, patients, specializations, schedulableServiceIds }) =>
         this.loadServices(specializations).pipe(
           map((services) => ({
             offices,
             doctors,
+            patients,
             specializations,
             services,
             schedulableServiceIds,
           }))
         )
       ),
-      map(({ offices, doctors, services, specializations, schedulableServiceIds }) => ({
-        // Patient search is gated by the profiles patient endpoint (plan gate P-2).
-        patients: [],
+      map(({ offices, doctors, patients, services, specializations, schedulableServiceIds }) => ({
+        patients,
         offices,
         specializations,
         services,
@@ -242,7 +264,6 @@ export class AppointmentCatalogService {
     );
 
     this.pending = request$;
-
     return request$;
   }
 
@@ -285,6 +306,24 @@ export class AppointmentCatalogService {
     );
   }
 
+  /**
+   * Loads the whole patient list. The Profiles API has no search parameter, so the
+   * combobox filters this list client-side by full name.
+   *
+   * Unlike `schedulableServiceIds`, this catalog does not degrade to an empty list: an
+   * empty patient picker looks like "no patients exist" and silently blocks the form.
+   * The rejected error is reported by the caller, with the failing source named.
+   */
+  private loadPatients(): Observable<readonly PatientOption[]> {
+    return this.patientsApi.patientsGet().pipe(
+      map((payload) => readApiEnvelope(payload, isPatientList)),
+      map((rows) => rows.map(toPatientOption)),
+      catchError((error: unknown) =>
+        throwError(() => new CatalogSourceError('patients', error))
+      )
+    );
+  }
+
   private loadSpecializations(): Observable<readonly SpecializationOption[]> {
     return this.specializationsApi
       .specializationGet({ Page: 1, PageSize: SPECIALIZATION_PAGE_SIZE })
@@ -316,12 +355,6 @@ export class AppointmentCatalogService {
     ).pipe(map((groups) => groups.flat()));
   }
 
-  /**
-   * Ids the appointments schedule endpoint can resolve.
-   *
-   * A failure is degraded to `null` instead of failing the whole catalog load: the form
-   * stays usable and falls back to querying the schedule.
-   */
   private loadSchedulableServiceIds(): Observable<ReadonlySet<string> | null> {
     return this.schedulingServicesApi.servicesGet().pipe(
       map((payload) => readApiEnvelope(payload, isSchedulingServiceList)),
@@ -381,8 +414,6 @@ export class AppointmentCatalogService {
 
       const specialization = specializationByName.get(normalizeAddress(row.specialization));
 
-      // A doctor whose specialization is missing from the Services API cannot satisfy
-      // the cascade, so the record is left out instead of offering an unusable option.
       if (specialization === undefined) {
         continue;
       }

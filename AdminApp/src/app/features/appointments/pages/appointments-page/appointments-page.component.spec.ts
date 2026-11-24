@@ -114,7 +114,7 @@ describe('AppointmentsPageComponent', () => {
 
     expect(api.appointmentsReceptionistGet).toHaveBeenCalledTimes(1);
     expect(api.appointmentsReceptionistGet.mock.calls[0]?.[0]).toEqual({
-      date: todayDateInputValue(),
+      date: `${todayDateInputValue()}T00:00:00Z`,
     });
     expect((fixture.nativeElement as HTMLElement).querySelector('table')).not.toBeNull();
     expect(textOf(fixture)).toContain('Ivanov Ivan Ivanovich');
@@ -140,7 +140,9 @@ describe('AppointmentsPageComponent', () => {
     await settle(fixture);
 
     expect(api.appointmentsReceptionistGet).toHaveBeenCalledTimes(2);
-    expect(api.appointmentsReceptionistGet.mock.calls[1]?.[0]).toEqual({ date: '2026-11-21' });
+    expect(api.appointmentsReceptionistGet.mock.calls[1]?.[0]).toEqual({
+      date: '2026-11-21T00:00:00Z',
+    });
   });
 
   it('forwards combined filters after generation', async () => {
@@ -161,7 +163,7 @@ describe('AppointmentsPageComponent', () => {
     await settle(fixture);
 
     expect(api.appointmentsReceptionistGet).toHaveBeenLastCalledWith({
-      date: todayDateInputValue(),
+      date: `${todayDateInputValue()}T00:00:00Z`,
       isApproved: true,
     });
   });

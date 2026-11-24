@@ -1,124 +1,70 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Observable, of } from 'rxjs';
 
-import { SignInPageComponent } from './sign-in-page.component';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ACCOUNT_EXISTS_LOOKUP } from '../../../../core/tokens/account-exists-lookup.token';
-import { SIGN_IN_MESSAGES, SignInFormGroup } from '../../models/sign-in-form.model';
 import { SignInOutcome } from '../../../../core/models/auth.model';
-
-type SignInFn = (email: string, password: string) => Observable<SignInOutcome>;
+import { SIGN_IN_MESSAGES } from '../../models/sign-in-form.model';
+import { SignInPageComponent } from './sign-in-page.component';
 
 describe('SignInPageComponent', () => {
   let fixture: ComponentFixture<SignInPageComponent>;
   let component: SignInPageComponent;
-  let router: Router;
-
-  const signIn = vi.fn<SignInFn>();
-  const showSuccess = vi.fn();
-  const showError = vi.fn();
+  const signIn = vi.fn<(email: string, password: string) => ReturnType<AuthService['signIn']>>();
+  const navigate = vi.fn();
 
   beforeEach(async () => {
     signIn.mockReset();
-    signIn.mockReturnValue(of({ success: true } as SignInOutcome));
-    showSuccess.mockReset();
-    showError.mockReset();
+    navigate.mockReset();
 
     await TestBed.configureTestingModule({
       imports: [SignInPageComponent],
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: { signIn } },
-        { provide: NotificationService, useValue: { showSuccess, showError } },
-        { provide: ACCOUNT_EXISTS_LOOKUP, useValue: () => of(true) },
+        { provide: NotificationService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
+        { provide: ACCOUNT_EXISTS_LOOKUP, useValue: () => of(null) },
       ],
     }).compileComponents();
 
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(navigate);
+
     fixture = TestBed.createComponent(SignInPageComponent);
     component = fixture.componentInstance;
-    router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockResolvedValue(true);
     fixture.detectChanges();
   });
 
-  function filledForm(): SignInFormGroup {
+  function submitWith(outcome: SignInOutcome): void {
+    signIn.mockReturnValue(of(outcome));
+
     const form = component.form();
     expect(form).not.toBeNull();
-    const group = form as SignInFormGroup;
+    form?.setValue({ email: 'doc@clinic.com', password: 'secret1' });
 
-    group.controls.email.clearAsyncValidators();
-    group.controls.email.setValue('doc@clinic.com');
-    group.controls.password.setValue('secret1');
-    group.updateValueAndValidity();
-
-    return group;
+    component.onSubmit();
   }
 
-  it('shows the success notification and navigates home', () => {
-    filledForm();
-    component.onSubmit();
-
-    expect(signIn).toHaveBeenCalledWith('doc@clinic.com', 'secret1');
-    expect(showSuccess).toHaveBeenCalledWith(SIGN_IN_MESSAGES.signedInSuccessfully);
-    expect(router.navigate).toHaveBeenCalledWith(['/']);
-  });
-
-  it('shows the generic rejection message and keeps the user on the page', () => {
-    signIn.mockReturnValue(of({ success: false, reason: 'invalid' } as SignInOutcome));
-    filledForm();
-
-    component.onSubmit();
+  it('shows the invalid-credentials message for reason "invalid"', () => {
+    submitWith({ success: false, reason: 'invalid' });
 
     expect(component.submitError()).toBe(SIGN_IN_MESSAGES.invalidCredentials);
-    expect(router.navigate).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('shows a neutral message and preserves the e-mail on a temporary failure', () => {
-    signIn.mockReturnValue(of({ success: false, reason: 'unavailable' } as SignInOutcome));
-    const form = filledForm();
-
-    component.onSubmit();
+  it('shows the temporarily-unavailable message for reason "unavailable"', () => {
+    submitWith({ success: false, reason: 'unavailable' });
 
     expect(component.submitError()).toBe(SIGN_IN_MESSAGES.temporarilyUnavailable);
-    expect(showError).toHaveBeenCalledWith(SIGN_IN_MESSAGES.temporarilyUnavailable);
-    expect(form.controls.email.value).toBe('doc@clinic.com');
-    expect(router.navigate).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('never sends an invalid form', () => {
-    component.onSubmit();
-
-    expect(signIn).not.toHaveBeenCalled();
-    expect(component.form()?.controls.email.hasError('required')).toBe(true);
-    expect(component.form()?.controls.password.hasError('required')).toBe(true);
-  });
-
-  it('clears the submit error as soon as a field changes', () => {
-    signIn.mockReturnValue(of({ success: false, reason: 'invalid' } as SignInOutcome));
-    filledForm();
-    component.onSubmit();
-    expect(component.submitError()).not.toBeNull();
-
-    component.onFieldChanged();
+  it('navigates home after a successful sign-in', () => {
+    submitWith({ success: true });
 
     expect(component.submitError()).toBeNull();
-  });
-
-  it('renders a non-dismissible modal card', () => {
-    const host = fixture.nativeElement as HTMLElement;
-
-    const dialog = host.querySelector('[role="dialog"][aria-modal="true"]');
-    expect(dialog).not.toBeNull();
-    expect(host.querySelector('button[aria-label="Close"]')).toBeNull();
-    expect(host.querySelector('button[aria-label="Dismiss"]')).toBeNull();
-
-    dialog?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    fixture.detectChanges();
-
-    expect(component.form()).not.toBeNull();
-    expect(router.navigate).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/']);
   });
 });

@@ -300,7 +300,7 @@ export class ReceptionistProfilePageComponent implements OnInit {
       lastName: profile.lastName,
       middleName: profile.middleName,
       email: '',
-      officeText: profile.officeAddress,
+      officeText: profile.officeAddress ?? '',
       officeId: office?.id ?? '',
     });
 
@@ -312,8 +312,8 @@ export class ReceptionistProfilePageComponent implements OnInit {
     this.photoPreview.set(photoUrl(profile.photoPath));
   }
 
-  private findOffice(address: string): OfficeOption | null {
-    const normalized = address.trim().toLowerCase();
+  private findOffice(address: string | null): OfficeOption | null {
+    const normalized = (address ?? '').trim().toLowerCase();
 
     return (
       this.offices().find((office) => office.label.trim().toLowerCase() === normalized) ?? null

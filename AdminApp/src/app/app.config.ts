@@ -20,6 +20,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    // Order matters: the token is attached first, then gateway 401s are handled as session
+    // rejections, and finally API errors are logged. The Keycloak token request is outside
+    // the Gateway URL pattern, so `authInterceptor` never adds a header to it.
     provideHttpClient(
       withInterceptors([authInterceptor, authErrorInterceptor, apiErrorInterceptor])
     ),

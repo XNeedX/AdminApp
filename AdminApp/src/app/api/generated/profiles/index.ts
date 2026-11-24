@@ -10,6 +10,7 @@ export { Api } from './api';
 export type { ApiResponse } from './models/api-response';
 export type { ApiResponseOfDoctorDetailsDto } from './models/api-response-of-doctor-details-dto';
 export type { ApiResponseOfGuid } from './models/api-response-of-guid';
+export type { ApiResponseOfIEnumerableOfPatientProfileDto } from './models/api-response-of-i-enumerable-of-patient-profile-dto';
 export type { ApiResponseOfPagedResultOfDoctorTableRowDto } from './models/api-response-of-paged-result-of-doctor-table-row-dto';
 export type { ApiResponseOfPagedResultOfReceptionistProfileDto } from './models/api-response-of-paged-result-of-receptionist-profile-dto';
 export type { ApiResponseOfPatientProfileDto } from './models/api-response-of-patient-profile-dto';
@@ -50,6 +51,8 @@ export type { PatientsAccountAccountIdGet$Params as PatientsAccountAccountIdGet$
 export { patientsAccountAccountIdGet as patientsAccountAccountIdGet } from './fn/patients/patients-account-account-id-get';
 export type { PatientsIdGet$Params as PatientsIdGet$Params } from './fn/patients/patients-id-get';
 export { patientsIdGet as patientsIdGet } from './fn/patients/patients-id-get';
+export type { PatientsGet$Params as PatientsGet$Params } from './fn/patients/patients-get';
+export { patientsGet as patientsGet } from './fn/patients/patients-get';
 export type { ReceptionistsGet$Params as ReceptionistsGet$Params } from './fn/receptionists/receptionists-get';
 export { receptionistsGet as receptionistsGet } from './fn/receptionists/receptionists-get';
 export type { ReceptionistsPost$Params as ReceptionistsPost$Params } from './fn/receptionists/receptionists-post';

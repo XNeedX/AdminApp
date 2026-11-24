@@ -4,6 +4,7 @@
 export interface PatientProfileDto {
   dateOfBirth?: string;
   firstName?: string;
+  id?: string;
   lastName?: string;
   middleName?: string | null;
   phoneNumber?: string;

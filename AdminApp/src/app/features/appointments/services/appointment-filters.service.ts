@@ -27,7 +27,8 @@ export class AppointmentFiltersService {
     const params: AppointmentsReceptionistGet$Params = {};
 
     if (state.date.length > 0) {
-      params.date = state.date;
+      // ФИКС ЗДЕСЬ: добавляем T00:00:00Z, чтобы бэкенд распознал дату как UTC
+      params.date = state.date + 'T00:00:00Z';
     }
 
     if (state.doctorId.length > 0) {

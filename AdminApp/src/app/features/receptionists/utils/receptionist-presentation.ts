@@ -21,8 +21,8 @@ export function displayValue(value: string | null): string {
 }
 
 /** Explicit "not assigned" indicator for a missing office (FR-055). */
-export function officeLabel(value: string): string {
-  return value.trim().length === 0 ? 'Not assigned' : value;
+export function officeLabel(value: string | null): string {
+  return value === null || value.trim().length === 0 ? 'Not assigned' : value;
 }
 
 /** Resolves a stored Documents id to the Gateway image URL, or null without a photo. */

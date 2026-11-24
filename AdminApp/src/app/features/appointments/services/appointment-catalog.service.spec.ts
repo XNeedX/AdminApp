@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OfficesService } from '../../../api/generated/offices/services/offices.service';
 import { ServicesService as AppointmentsServicesService } from '../../../api/generated/appointments/services/services.service';
 import { DoctorsService as ProfilesDoctorsService } from '../../../api/generated/profiles/services/doctors.service';
+import { PatientsService as ProfilesPatientsService } from '../../../api/generated/profiles/services/patients.service';
 import { SpecializationService } from '../../../api/generated/services/services/specialization.service';
 import { AppointmentCatalogService } from './appointment-catalog.service';
 
@@ -23,6 +24,7 @@ interface ApiMock {
   readonly specializationGet: ReturnType<typeof vi.fn>;
   readonly specializationIdGet: ReturnType<typeof vi.fn>;
   readonly servicesGet: ReturnType<typeof vi.fn>;
+  readonly patientsGet: ReturnType<typeof vi.fn>;
 }
 
 function envelope(data: unknown): unknown {
@@ -38,6 +40,26 @@ const DOCTOR_ROW = {
   status: 'At work',
   dateOfBirth: '1990-01-01T00:00:00',
   officeAddress: '1 Main St',
+};
+
+const PATIENT_ROW = {
+  id: 'pat-1',
+  firstName: 'Petr',
+  lastName: 'Petrov',
+  middleName: 'Petrovich',
+  phoneNumber: '+10000000000',
+  dateOfBirth: '1990-01-01T00:00:00',
+  photoPath: null,
+};
+
+const PATIENT_WITHOUT_MIDDLE_NAME = {
+  id: 'pat-2',
+  firstName: 'Anna',
+  lastName: 'Sidorova',
+  middleName: null,
+  phoneNumber: '+20000000000',
+  dateOfBirth: '1985-05-05T00:00:00',
+  photoPath: null,
 };
 
 const SPECIALIZATION_ROW = { id: 'spec-1', name: 'Cardiology', status: 0 };
@@ -74,6 +96,10 @@ describe('AppointmentCatalogService scheduling catalog', () => {
           of(envelope(SPECIALIZATION_DETAIL))
       ),
       servicesGet: vi.fn((): Observable<unknown> => of(envelope([SCHEDULING_SERVICE]))),
+      patientsGet: vi.fn(
+        (): Observable<unknown> =>
+          of(envelope([PATIENT_ROW, PATIENT_WITHOUT_MIDDLE_NAME]))
+      ),
     };
 
     TestBed.configureTestingModule({
@@ -81,6 +107,7 @@ describe('AppointmentCatalogService scheduling catalog', () => {
         AppointmentCatalogService,
         { provide: OfficesService, useValue: api },
         { provide: ProfilesDoctorsService, useValue: api },
+        { provide: ProfilesPatientsService, useValue: api },
         { provide: SpecializationService, useValue: api },
         { provide: AppointmentsServicesService, useValue: api },
       ],
@@ -99,6 +126,54 @@ describe('AppointmentCatalogService scheduling catalog', () => {
     expect(catalogs.schedulableServiceIds).not.toBeNull();
     expect([...(catalogs.schedulableServiceIds ?? [])]).toEqual(['svc-synced']);
     expect(catalogs.doctors).toHaveLength(1);
+  });
+
+  it('exposes every patient of the Profiles API list as a selectable option', async () => {
+    const catalogs = await firstValueFrom(service.load());
+
+    expect(catalogs.patients).toEqual([
+      {
+        id: 'pat-1',
+        fullName: 'Petr Petrov Petrovich',
+        phoneNumber: '+10000000000',
+      },
+      {
+        id: 'pat-2',
+        fullName: 'Anna Sidorova',
+        phoneNumber: '+20000000000',
+      },
+    ]);
+  });
+
+  it('fails the catalog load when the patient list does not match the contract', async () => {
+    api.patientsGet.mockReturnValue(of(envelope([{ firstName: 1 }])));
+
+    await expect(firstValueFrom(service.load())).rejects.toThrow();
+  });
+
+  // Regression: the Profiles API must expose the patient id. Without it the row guard
+  // rejects the whole list and the page shows "Could not load patients."
+  it('fails the catalog load when a patient row has no id', async () => {
+    api.patientsGet.mockReturnValue(
+      of(
+        envelope([
+          {
+            firstName: 'Petr',
+            lastName: 'Petrov',
+            middleName: 'Petrovich',
+            phoneNumber: '+10000000000',
+            dateOfBirth: '1990-01-01T00:00:00',
+            photoPath: null,
+          },
+        ])
+      )
+    );
+
+    await expect(firstValueFrom(service.load())).rejects.toMatchObject({
+      name: 'CatalogSourceError',
+      source: 'patients',
+      message: 'Could not load patients.',
+    });
   });
 
   it('reports an empty scheduling catalog while keeping the Services API options visible', async () => {

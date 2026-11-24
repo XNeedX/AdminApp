@@ -7,14 +7,16 @@ export interface ReceptionistProfile {
   readonly firstName: string;
   readonly lastName: string;
   readonly middleName: string | null;
-  readonly officeAddress: string;
+  /** Absent for a receptionist not yet assigned to an office; normalized to `null`. */
+  readonly officeAddress: string | null;
 }
 
 /** A validated row of the Receptionists table. */
 export interface ReceptionistRow {
   readonly id: string;
   readonly fullName: string;
-  readonly officeAddress: string;
+  /** `null` when the receptionist has no office; rendered as "Not assigned". */
+  readonly officeAddress: string | null;
   readonly photoPath: string | null;
 }
 

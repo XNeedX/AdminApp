@@ -8,14 +8,14 @@
       "enabled": true,
       "priority": 10,
       "registered_commands": {
-        "opencode": [
+        "claude": [
           "speckit.bug.assess",
           "speckit.bug.fix",
           "speckit.bug.test"
         ]
       },
       "registered_skills": [],
-      "installed_at": "2026-11-10T22:24:06.920008+00:00"
+      "installed_at": "2026-11-23T16:23:17.652619+00:00"
     }
   }
 }

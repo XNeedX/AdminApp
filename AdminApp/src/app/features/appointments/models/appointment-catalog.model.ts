@@ -3,8 +3,8 @@ import { DoctorStatus } from '../../doctors/models/doctor-form.model';
 /**
  * A patient selectable for a new appointment.
  *
- * Patient search is gated by the profiles patient endpoint (plan gate **P-2**); until it
- * exists this catalog stays empty and the appointment form cannot be completed.
+ * The Profiles API returns the whole patient list without a search parameter; the
+ * combobox filters it client-side by full name.
  */
 export interface PatientOption {
   readonly id: string;

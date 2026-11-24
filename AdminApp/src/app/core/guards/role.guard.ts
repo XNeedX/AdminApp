@@ -3,12 +3,14 @@ import { CanActivateFn, Router } from '@angular/router';
 
 import { AuthRole } from '../models/auth.model';
 import { AuthService } from '../services/auth.service';
+import { NotificationService } from '../services/notification.service';
 
 /**
  * Restricts a route to signed-in users that hold at least one of the allowed roles.
  *
  * Unauthenticated users are sent to `/sign-in`; authenticated users without a matching
- * role are sent to `/`. Returning a `UrlTree` keeps the guard side-effect free.
+ * role are sent to `/` and told why, so a missing role never looks like a broken page.
+ * Returning a `UrlTree` keeps navigation itself side-effect free.
  */
 export function roleGuard(...allowed: readonly AuthRole[]): CanActivateFn {
   return () => {
@@ -22,6 +24,13 @@ export function roleGuard(...allowed: readonly AuthRole[]): CanActivateFn {
     const roles = auth.user()?.roles ?? [];
     const isAllowed = roles.some((role) => allowed.includes(role));
 
-    return isAllowed ? true : router.createUrlTree(['/']);
+    if (!isAllowed) {
+      inject(NotificationService).showError(
+        'You do not have access to this section with your current role.'
+      );
+      return router.createUrlTree(['/']);
+    }
+
+    return true;
   };
 }

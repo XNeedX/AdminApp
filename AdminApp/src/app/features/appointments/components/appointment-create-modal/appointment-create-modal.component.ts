@@ -30,7 +30,10 @@ import {
   AppointmentAvailabilityService,
   SLOT_LOAD_ERROR_MESSAGE,
 } from '../../services/appointment-availability.service';
-import { AppointmentCatalogService } from '../../services/appointment-catalog.service';
+import {
+  AppointmentCatalogService,
+  CatalogSourceError,
+} from '../../services/appointment-catalog.service';
 import { AppointmentFormStore } from '../../services/appointment-form.store';
 import { AppointmentsFacadeService } from '../../services/appointments-facade.service';
 import { todayDateInputValue } from '../../utils/appointment-date';
@@ -116,10 +119,6 @@ export class AppointmentCreateModalComponent implements OnInit {
 
     return schedulable.has(serviceId);
   });
-
-  protected readonly patientUnavailable = computed(
-    () => !this.isCatalogsLoading() && this.store.catalogs().patients.length === 0
-  );
 
   protected readonly patientOptions = computed<readonly AutocompleteOption[]>(() =>
     this.store.options().patients.map((patient) => ({
@@ -382,6 +381,10 @@ export class AppointmentCreateModalComponent implements OnInit {
     this.isCatalogsLoading.set(true);
     this.catalogError.set(null);
 
+    // The catalog is an all-or-nothing fork: one failing endpoint rejects the whole
+    // load. Patients and doctors are needed to complete the form, so a failure there
+    // blocks the form; the optional catalogs degrade instead (`schedulableServiceIds`
+    // falls back to `null` inside the service).
     this.catalogService
       .load(force)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -391,12 +394,24 @@ export class AppointmentCreateModalComponent implements OnInit {
           this.isCatalogsLoading.set(false);
         },
         error: (error: unknown) => {
-          const message = this.toErrorMessage(error);
+          const message = this.toCatalogErrorMessage(error);
           this.catalogError.set(message);
           this.isCatalogsLoading.set(false);
           this.notifications.showError(message);
         },
       });
+  }
+
+  /**
+   * Names the failing catalog so a validation failure ("unexpected payload shape") is
+   * not reported without context: the user needs to know which list could not be read.
+   */
+  private toCatalogErrorMessage(error: unknown): string {
+    if (error instanceof CatalogSourceError) {
+      return `Could not load the ${error.source} list: ${this.toErrorMessage(error.cause)}`;
+    }
+
+    return this.toErrorMessage(error);
   }
 
   private loadSlots(query: SlotQuery | null): Observable<readonly string[]> {

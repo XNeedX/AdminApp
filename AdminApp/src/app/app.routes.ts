@@ -32,6 +32,8 @@ export const routes: Routes = [
             (m) => m.DoctorsPageComponent
           ),
       },
+      // `receptionists` and `receptionists/:id/profile` both use full path matching, so
+      // their order is not significant; the tab is served by the list route below.
       {
         path: 'receptionists',
         canActivate: [roleGuard('Receptionist')],

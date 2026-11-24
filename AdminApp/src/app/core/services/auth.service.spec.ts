@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from './auth.service';
 import { AUTH_SESSION_STORAGE_KEY } from '../models/auth.model';
 import { SILENT_HTTP_ERROR } from '../tokens/silent-http-error.token';
+import { SKIP_AUTH_REDIRECT } from '../tokens/skip-auth-redirect.token';
 import { environment } from '../../../environments/environment.development';
 
 const TOKEN_URL = `${environment.keycloakUrl}/realms/InnoClinic/protocol/openid-connect/token`;
@@ -210,6 +211,60 @@ describe('AuthService', () => {
 
       expect(outcome).toEqual({ success: true });
       expect(service.isAuthenticated()).toBe(true);
+    });
+
+    it('sends no Authorization header on the token request', () => {
+      service.signIn('doc@clinic.com', 'secret1').subscribe({ error: () => undefined });
+
+      const tokenRequest = httpMock.expectOne(TOKEN_URL);
+      expect(tokenRequest.request.headers.has('Authorization')).toBe(false);
+
+      tokenRequest.flush(
+        { error: 'invalid_grant', error_description: 'Invalid user credentials' },
+        { status: 400, statusText: 'Bad Request' }
+      );
+    });
+
+    it('marks the profile probe with SKIP_AUTH_REDIRECT so a probe 401 is not a session rejection', () => {
+      service.signIn('doc@clinic.com', 'secret1').subscribe({ error: () => undefined });
+
+      httpMock.expectOne(TOKEN_URL).flush({
+        access_token: makeAccessToken(staffClaims()),
+        refresh_token: 'refresh-1',
+        expires_in: 300,
+      });
+
+      const profileRequest = httpMock.expectOne(
+        `${environment.apiUrl}/profiles/doctors/account/acc-doctor`
+      );
+      expect(profileRequest.request.context.get(SKIP_AUTH_REDIRECT)).toBe(true);
+      expect(profileRequest.request.context.get(SILENT_HTTP_ERROR)).toBe(true);
+
+      profileRequest.flush({}, { status: 404, statusText: 'Not Found' });
+    });
+
+    it('warns about a not-fully-set-up account on invalid_grant but still returns the generic failure', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      let outcome: unknown;
+
+      service.signIn('doc@clinic.com', 'temp').subscribe((result) => (outcome = result));
+
+      httpMock
+        .expectOne(TOKEN_URL)
+        .flush(
+          {
+            error: 'invalid_grant',
+            error_description: 'Account is not fully set up',
+          },
+          { status: 400, statusText: 'Bad Request' }
+        );
+
+      expect(outcome).toEqual({ success: false, reason: 'invalid' });
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('not fully set up')
+      );
+      expect(warn.mock.calls.flat().join(' ')).not.toContain('Account is not fully set up');
+      warn.mockRestore();
     });
 
     it('fails open while the profile status endpoint is missing', () => {
