@@ -10,8 +10,8 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
-import { ApiResponseOfIEnumerableOfPatientProfileDto } from '../models/api-response-of-i-enumerable-of-patient-profile-dto';
 import { ApiResponseOfPatientProfileDto } from '../models/api-response-of-patient-profile-dto';
+import { PatientCatalogItemDtoIReadOnlyListApiResponse } from '../models/patient-catalog-item-dto-i-read-only-list-api-response';
 import { patientsAccountAccountIdGet } from '../fn/patients/patients-account-account-id-get';
 import { PatientsAccountAccountIdGet$Params } from '../fn/patients/patients-account-account-id-get';
 import { patientsConfirmPost } from '../fn/patients/patients-confirm-post';
@@ -175,7 +175,7 @@ export class PatientsService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  patientsGet$Response(params?: PatientsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponseOfIEnumerableOfPatientProfileDto>> {
+  patientsGet$Response(params?: PatientsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PatientCatalogItemDtoIReadOnlyListApiResponse>> {
     const obs = patientsGet(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -186,10 +186,10 @@ export class PatientsService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  patientsGet(params?: PatientsGet$Params, context?: HttpContext): Observable<ApiResponseOfIEnumerableOfPatientProfileDto> {
+  patientsGet(params?: PatientsGet$Params, context?: HttpContext): Observable<PatientCatalogItemDtoIReadOnlyListApiResponse> {
     const resp = this.patientsGet$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<ApiResponseOfIEnumerableOfPatientProfileDto>): ApiResponseOfIEnumerableOfPatientProfileDto => r.body)
+      map((r: StrictHttpResponse<PatientCatalogItemDtoIReadOnlyListApiResponse>): PatientCatalogItemDtoIReadOnlyListApiResponse => r.body)
     );
   }
 

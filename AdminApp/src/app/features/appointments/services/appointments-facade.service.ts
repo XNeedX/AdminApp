@@ -3,13 +3,18 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiContractError, readApiAcknowledgment, readApiEnvelope } from '../../../api/api-envelope';
+import { ViewAppointmentListDto } from '../../../api/generated/appointments/models/view-appointment-list-dto';
 import { AppointmentsService } from '../../../api/generated/appointments/services/appointments.service';
 import { extractErrorMessage } from '../../../core/interceptors/api-error.interceptor';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AppointmentCatalogs } from '../models/appointment-catalog.model';
 import { AppointmentFilterState } from '../models/appointment-filter.model';
 import { AppointmentRow } from '../models/appointment.model';
-import { toTimeRangeLabel } from '../utils/appointment-date';
+import {
+  toApiAppointmentDate,
+  toApiAppointmentTimeSlot,
+  toTimeRangeLabel,
+} from '../utils/appointment-date';
 import { AppointmentFiltersService } from './appointment-filters.service';
 import { sortAppointments } from './appointment-sort';
 
@@ -30,7 +35,7 @@ export type CreateAppointmentOutcome =
   | { readonly kind: 'patientInactive'; readonly message: string }
   | { readonly kind: 'failed'; readonly message: string };
 
-interface AppointmentRowDto {
+interface AppointmentRowDto extends ViewAppointmentListDto {
   readonly id: string;
   readonly startTime: string;
   readonly endTime: string;
@@ -171,8 +176,8 @@ export class AppointmentsFacadeService {
             doctorId: payload.doctorId,
             serviceId: payload.serviceId,
             officeId: payload.officeId,
-            date: payload.date,
-            timeSlot: `${payload.date}T${payload.timeSlot}:00`,
+            date: toApiAppointmentDate(payload.date),
+            timeSlot: toApiAppointmentTimeSlot(payload.date, payload.timeSlot),
           },
         })
       );
@@ -183,6 +188,30 @@ export class AppointmentsFacadeService {
       return { kind: 'created' };
     } catch (error: unknown) {
       return this.toCreateOutcome(error);
+    }
+  }
+
+  async reschedule(
+    id: string,
+    { doctorId, date, timeSlot }: Pick<CreateAppointmentPayload, 'doctorId' | 'date' | 'timeSlot'>
+  ): Promise<CreateAppointmentOutcome> {
+    try {
+      const response = await firstValueFrom(
+        this.appointments.appointmentsIdReschedulePatch({
+          id,
+          body: {
+            doctorId,
+            date: toApiAppointmentDate(date),
+            timeSlot: toApiAppointmentTimeSlot(date, timeSlot),
+          },
+        })
+      );
+
+      readApiAcknowledgment(response);
+      this.notifications.showSuccess('Appointment has been rescheduled');
+      return { kind: 'created' };
+    } catch (error: unknown) {
+      return this.toCreateOutcome(error, false);
     }
   }
 
@@ -204,8 +233,11 @@ export class AppointmentsFacadeService {
       this.patchRow(row.id, { isApproved: true, isApproving: false });
       this.notifications.showSuccess('Appointment has been approved');
     } catch (error: unknown) {
-      if (error instanceof HttpErrorResponse && error.status === 409) {
-        // The server already holds the approval; lock the row and surface its message.
+      if (
+        error instanceof HttpErrorResponse &&
+        error.status === 409 &&
+        /already.*approved/i.test(serverMessage(error) ?? '')
+      ) {
         this.patchRow(row.id, { isApproved: true, isApproving: false });
         this.notifications.showError(serverMessage(error) ?? extractErrorMessage(error));
       } else {
@@ -261,7 +293,22 @@ export class AppointmentsFacadeService {
       patientPhoneNumber: dto.patientPhoneNumber,
       serviceName: dto.serviceName,
       isApproved: dto.isApproved,
-      officeId: officeId.length > 0 ? officeId : null,
+      officeId: dto.officeId ?? (officeId || null),
+      ...(typeof dto.patientId === 'string' &&
+      typeof dto.doctorId === 'string' &&
+      typeof dto.serviceId === 'string' &&
+      typeof dto.officeId === 'string' &&
+      typeof dto.date === 'string'
+        ? {
+            booking: {
+              patientId: dto.patientId,
+              doctorId: dto.doctorId,
+              serviceId: dto.serviceId,
+              officeId: dto.officeId,
+              date: dto.date.slice(0, 10),
+            },
+          }
+        : {}),
       isApproving: false,
       isDeleting: false,
     };
@@ -273,18 +320,18 @@ export class AppointmentsFacadeService {
     );
   }
 
-  private toCreateOutcome(error: unknown): CreateAppointmentOutcome {
+  private toCreateOutcome(error: unknown, creating = true): CreateAppointmentOutcome {
     if (error instanceof HttpErrorResponse) {
       const message = serverMessage(error) ?? extractErrorMessage(error);
 
-      if (error.status === 400 && /time\s*slot/i.test(message)) {
+      if ((error.status === 400 || error.status === 409) && /time\s*slot/i.test(message)) {
         return {
           kind: 'slotConflict',
           message: 'The selected time slot is no longer available. Please choose another one.',
         };
       }
 
-      if (error.status === 403) {
+      if (creating && error.status === 403) {
         return { kind: 'patientInactive', message };
       }
 

@@ -1,0 +1,146 @@
+<section class="clinic-page">
+  @if (page === 'schedule') {
+    <header class="clinic-page-header">
+      <div><h1>My schedule</h1><p>Review your visits and record appointment results.</p></div>
+      <div class="flex flex-col gap-1">
+        <label for="doctor-schedule-date" class="text-sm font-medium text-gray-700">Date</label>
+        <input id="doctor-schedule-date" type="date" [value]="date()" (change)="changeDate($event)"
+          class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm" />
+      </div>
+    </header>
+  } @else {
+    @if (fromPatient && result()?.patientId) {
+      <a class="w-fit font-medium text-blue-700" [routerLink]="['/doctor-patients', result()?.patientId]" [queryParams]="{ tab: 'results', date: date() }">← Back to patient</a>
+    } @else {
+      <a class="w-fit font-medium text-blue-700" routerLink="/my-schedule" [queryParams]="{ date: date() }">← Back to My schedule</a>
+    }
+  }
+
+  @if (loading()) {
+    <p class="clinic-card p-6 text-sm text-gray-600" role="status">Loading…</p>
+  } @else if (loadError(); as error) {
+    <div class="clinic-card p-6" role="alert">
+      <p class="text-sm text-red-700">{{ error }}</p>
+      <button type="button" class="clinic-button clinic-button-tonal mt-3" (click)="load()">Try again</button>
+    </div>
+  } @else if (page === 'schedule') {
+    @if (visits().length) {
+      <div class="clinic-card overflow-x-auto">
+        <table class="w-full min-w-[40rem] text-left text-sm">
+          <thead><tr><th class="p-4">Time</th><th class="p-4">Patient</th><th class="p-4">Service</th><th class="p-4">Status</th><th class="p-4">Results</th></tr></thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (visit of visits(); track visit.appointmentId) {
+              <tr>
+                <td class="p-4 whitespace-nowrap">{{ timeRange(visit.startTime ?? '', visit.endTime ?? '') }}</td>
+                <td class="p-4">
+                  @if (visit.isApproved) {
+                    <a class="font-semibold text-blue-700 hover:underline" [routerLink]="['/doctor-patients', visit.patientId]" [queryParams]="{ date: date() }">{{ visit.patientFullName }}</a>
+                  } @else { <span>{{ visit.patientFullName }}</span> }
+                </td>
+                <td class="p-4">{{ visit.serviceName }}</td>
+                <td class="p-4">
+                  <span class="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold" [class.bg-green-100]="visit.isApproved" [class.text-green-800]="visit.isApproved" [class.bg-gray-100]="!visit.isApproved">
+                    {{ visit.isApproved ? 'Approved' : 'Not Approved' }}
+                  </span>
+                </td>
+                <td class="p-4 whitespace-nowrap">
+                  @if (visit.isApproved) {
+                    <a class="clinic-button clinic-button-tonal" [routerLink]="['/appointment-results', visit.appointmentId]" [queryParams]="{ date: date() }">
+                      {{ visit.hasResult ? 'View result' : 'Add result' }}
+                    </a>
+                  } @else { <span class="text-gray-500">—</span> }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="clinic-card clinic-intro"><h3>No appointments</h3><p>Choose another date to view your schedule.</p></div>
+    }
+  } @else if (patient(); as current) {
+    @if (current.profile; as info) {
+      <header class="clinic-page-header">
+        <div><h1>{{ info.firstName }} {{ info.lastName }}</h1></div>
+      </header>
+      <div class="clinic-card p-5 sm:p-7">
+        <div class="mb-5 flex flex-wrap gap-2" role="group" aria-label="Patient profile sections">
+          <button type="button" class="clinic-button" [class.clinic-button-tonal]="tab() === 'personal'" [attr.aria-pressed]="tab() === 'personal'" (click)="tab.set('personal')">Personal information</button>
+          <button type="button" class="clinic-button" [class.clinic-button-tonal]="tab() === 'results'" [attr.aria-pressed]="tab() === 'results'" (click)="tab.set('results')">Appointment results</button>
+        </div>
+        @if (tab() === 'personal') {
+          <div class="mb-5 grid size-20 place-items-center overflow-hidden rounded-2xl bg-blue-50 text-xl font-bold text-blue-700">
+            @if (photoUrl(info.photoPath ?? null); as url) {
+              <img [src]="url" alt="Patient photo" class="size-full object-cover" />
+            } @else { <span aria-hidden="true">{{ info.firstName?.slice(0,1) }}{{ info.lastName?.slice(0,1) }}</span> }
+          </div>
+          <dl class="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <div><dt class="text-gray-500">First name</dt><dd class="font-semibold">{{ info.firstName }}</dd></div>
+            <div><dt class="text-gray-500">Last name</dt><dd class="font-semibold">{{ info.lastName }}</dd></div>
+            <div><dt class="text-gray-500">Middle name</dt><dd class="font-semibold">{{ info.middleName || '—' }}</dd></div>
+            <div><dt class="text-gray-500">Phone number</dt><dd class="font-semibold">{{ info.phoneNumber }}</dd></div>
+            <div><dt class="text-gray-500">Date of birth</dt><dd class="font-semibold">{{ info.dateOfBirth | date:'dd.MM.yyyy':'UTC' }}</dd></div>
+          </dl>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[42rem] text-left text-sm">
+              <thead><tr><th class="p-3">Appointment date</th><th class="p-3">Appointment time</th><th class="p-3">Full name of the doctor</th><th class="p-3">Service name</th><th class="p-3">Result</th></tr></thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (visit of current.history; track visit.appointmentId) {
+                  <tr><td class="p-3">{{ visit.date | date:'dd.MM.yyyy':'UTC' }}</td>
+                    <td class="p-3 whitespace-nowrap">{{ timeRange(visit.startTime ?? '', visit.endTime ?? '') }}</td>
+                    <td class="p-3">{{ visit.doctorFullName }}</td><td class="p-3">{{ visit.serviceName }}</td>
+                    <td class="p-3">
+                      @if (visit.resultId) {
+                        <a class="font-semibold text-blue-700 hover:underline" [routerLink]="['/appointment-results', visit.appointmentId]" [queryParams]="{ from: 'patient', date: date() }">View result</a>
+                      } @else { <span class="text-gray-500">—</span> }
+                    </td>
+                  </tr>
+                } @empty { <tr><td colspan="5" class="p-4 text-gray-500">No appointments found.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+  } @else if (result(); as current) {
+    <header class="clinic-page-header">
+      <div><h1>{{ editing() ? (current.hasResult ? 'Edit result' : 'Create result') : 'Appointment result' }}</h1></div>
+      @if (!editing() && current.canEdit) {
+        <button type="button" class="clinic-button clinic-button-filled" (click)="edit(current)">Edit</button>
+      }
+    </header>
+    <div class="clinic-card p-5 sm:p-7">
+      <dl class="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+        <div><dt class="text-gray-500">Date of the result</dt><dd class="font-semibold">{{ current.date | date:'dd.MM.yyyy':'UTC' }}</dd></div>
+        <div><dt class="text-gray-500">Full name of the patient</dt><dd class="font-semibold">{{ current.patientFullName }}</dd></div>
+        <div><dt class="text-gray-500">Patient’s date of birth</dt><dd class="font-semibold">{{ current.patientDateOfBirth | date:'dd.MM.yyyy':'UTC' }}</dd></div>
+        <div><dt class="text-gray-500">Full name of the doctor</dt><dd class="font-semibold">{{ current.doctorFullName }}</dd></div>
+        <div><dt class="text-gray-500">Doctor’s specialization</dt><dd class="font-semibold">{{ current.specialization }}</dd></div>
+        <div><dt class="text-gray-500">Service name</dt><dd class="font-semibold">{{ current.serviceName }}</dd></div>
+      </dl>
+      @if (editing()) {
+        <form class="mt-6 space-y-4 border-t border-gray-100 pt-5" [formGroup]="form" (ngSubmit)="save(current)">
+          @for (field of resultFields; track field.name) {
+            <div>
+              <label class="block text-sm font-semibold" [for]="field.name">{{ field.label }}</label>
+              <textarea [id]="field.name" [formControlName]="field.name" rows="4" required
+                class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"></textarea>
+            </div>
+          }
+          @if (saveError(); as error) { <p class="text-sm text-red-700" role="alert">{{ error }}</p> }
+          <div class="flex flex-wrap justify-end gap-2">
+            <button type="button" class="clinic-button clinic-button-outlined" (click)="cancel()" [disabled]="saving()">Cancel</button>
+            <button type="submit" class="clinic-button clinic-button-filled" [disabled]="form.invalid || saving()">{{ saving() ? 'Saving…' : 'Confirm' }}</button>
+          </div>
+        </form>
+      } @else {
+        <dl class="mt-6 space-y-4 border-t border-gray-100 pt-5">
+          @for (field of resultFields; track field.name) {
+            <div><dt class="text-sm font-semibold">{{ field.label }}</dt><dd class="mt-1 whitespace-pre-wrap break-words text-sm text-gray-700">{{ current[field.name] }}</dd></div>
+          }
+        </dl>
+      }
+    </div>
+  }
+</section>

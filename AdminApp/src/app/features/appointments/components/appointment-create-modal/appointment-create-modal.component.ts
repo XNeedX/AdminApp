@@ -8,18 +8,18 @@ import {
   computed,
   effect,
   inject,
+  input,
   output,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Observable, Subject, catchError, debounceTime, map, of, switchMap } from 'rxjs';
+import { Observable, Subject, catchError, map, of, switchMap, timer } from 'rxjs';
 
 import { extractErrorMessage } from '../../../../core/interceptors/api-error.interceptor';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AutocompleteOption } from '../../../../shared/components/autocomplete/autocomplete.model';
 import { AppComboboxComponent } from '../../../../shared/components/app-combobox/app-combobox.component';
-import { AppDateFieldComponent } from '../../../../shared/components/app-date-field/app-date-field.component';
 import { AppDialogComponent } from '../../../../shared/components/app-dialog/app-dialog.component';
 import { AppDialogService } from '../../../../shared/components/app-dialog/app-dialog.service';
 import {
@@ -34,6 +34,8 @@ import {
   AppointmentCatalogService,
   CatalogSourceError,
 } from '../../services/appointment-catalog.service';
+import { AppointmentRow } from '../../models/appointment.model';
+import { buildCascadeOptions } from '../../services/appointment-cascade';
 import { AppointmentFormStore } from '../../services/appointment-form.store';
 import { AppointmentsFacadeService } from '../../services/appointments-facade.service';
 import { todayDateInputValue } from '../../utils/appointment-date';
@@ -66,7 +68,6 @@ type SlotLoadResult =
     CdkTrapFocus,
     AppDialogComponent,
     AppComboboxComponent,
-    AppDateFieldComponent,
   ],
   providers: [AppointmentFormStore],
   templateUrl: './appointment-create-modal.component.html',
@@ -83,6 +84,7 @@ export class AppointmentCreateModalComponent implements OnInit {
   protected readonly store = inject(AppointmentFormStore);
   protected readonly form: FormGroup<AppointmentFormGroup> = this.store.form;
 
+  readonly appointment = input<AppointmentRow | null>(null);
   readonly created = output<void>();
   readonly closed = output<void>();
 
@@ -94,7 +96,9 @@ export class AppointmentCreateModalComponent implements OnInit {
 
   protected readonly formValue = this.store.value;
   protected readonly cascade = this.store.cascade;
-  protected readonly confirmEnabled = this.store.confirmEnabled;
+  protected readonly confirmEnabled = computed(() =>
+    this.store.confirmEnabled() && this.formValue().date >= this.today
+  );
   protected readonly isSubmitting = this.store.isSubmitting;
   protected readonly isLoadingSlots = this.store.isLoadingSlots;
 
@@ -149,6 +153,40 @@ export class AppointmentCreateModalComponent implements OnInit {
   );
 
   protected readonly officeOptions = computed(() => this.store.options().offices);
+  protected readonly fixedOffice = computed(() =>
+    this.store.catalogs().offices.find(({ id }) => id === this.formValue().officeId)?.displayName ?? ''
+  );
+
+  protected readonly calendarOpen = signal(false);
+  protected readonly calendarMonth = signal(this.today.slice(0, 7));
+  protected readonly availableDates = signal<ReadonlySet<string> | null>(null);
+  protected readonly datesLoadError = signal(false);
+  private readonly calendarRefresh = signal(0);
+  private readonly doctorCandidates = computed(() => buildCascadeOptions({
+    value: this.formValue(),
+    catalogs: this.store.catalogs(),
+    availableDoctors: null,
+  }).doctors.map(({ id }) => id));
+
+  protected readonly calendar = computed(() => {
+    const first = new Date(this.calendarMonth() + '-01T00:00:00Z');
+    const last = new Date(first);
+    last.setUTCMonth(last.getUTCMonth() + 1, 0);
+    return {
+      first: first.toISOString().slice(0, 10),
+      last: last.toISOString().slice(0, 10),
+      label: new Intl.DateTimeFormat('en', {
+        month: 'long', year: 'numeric', timeZone: 'UTC',
+      }).format(first),
+      leadingDays: Array.from({ length: (first.getUTCDay() + 6) % 7 }, (_, i) => i),
+      dates: Array.from({ length: last.getUTCDate() }, (_, i) => ({
+        day: i + 1,
+        value: this.calendarMonth() + '-' + String(i + 1).padStart(2, '0'),
+      })),
+    };
+  });
+
+  private closeConfirmationOpen = false;
 
   private readonly slotQuery = new Subject<SlotQuery | null>();
 
@@ -161,9 +199,10 @@ export class AppointmentCreateModalComponent implements OnInit {
   constructor() {
     this.slotQuery
       .pipe(
-        debounceTime(250),
         switchMap((query) =>
-          this.loadSlots(query).pipe(
+          (query === null ? this.loadSlots(query) : timer(250).pipe(
+            switchMap(() => this.loadSlots(query))
+          )).pipe(
             map((slots): SlotLoadResult => ({ ok: true, slots })),
             // Keep the failure inside the stream: an error that escapes `switchMap`
             // tears down the subscription and the retry action would never run.
@@ -183,6 +222,10 @@ export class AppointmentCreateModalComponent implements OnInit {
         }
 
         this.store.availableSlots.set(result.slots);
+        const selected = this.store.value().timeSlot;
+        if (selected && !result.slots.includes(selected)) {
+          this.store.selectSlot('');
+        }
         this.slotsLoadError.set(null);
       });
 
@@ -197,6 +240,7 @@ export class AppointmentCreateModalComponent implements OnInit {
         value.doctorId,
         value.officeId,
         schedulable ? 'schedulable' : 'unschedulable',
+        ...(value.doctorId ? [] : this.doctorCandidates()),
       ].join('|');
 
       if (key === this.lastSlotKey) {
@@ -218,13 +262,41 @@ export class AppointmentCreateModalComponent implements OnInit {
         doctorId: value.doctorId,
         serviceId: value.serviceId,
         date: value.date,
-        candidateDoctorIds: this.store.options().doctors.map((doctor) => doctor.id),
+        candidateDoctorIds: this.doctorCandidates(),
       };
 
       this.isLoadingSlots.set(true);
       this.slotsLoadError.set(null);
       this.pendingSlotQuery = query;
       this.slotQuery.next(query);
+    });
+
+    effect((onCleanup) => {
+      const { doctorId, date, serviceId, timeSlot } = this.formValue();
+      if (doctorId || !date || !serviceId || !timeSlot) return;
+
+      const request = this.availability.getDoctorAvailability(
+        this.doctorCandidates(), serviceId, date, timeSlot, this.appointment()?.id
+      ).subscribe((doctors) => this.store.availableDoctors.set(doctors));
+      onCleanup(() => request.unsubscribe());
+    });
+
+    effect((onCleanup) => {
+      this.calendarRefresh();
+      if (!this.calendarOpen() || !this.cascade().dateEnabled) return;
+
+      const { doctorId, serviceId } = this.formValue();
+      const { first, last } = this.calendar();
+      this.availableDates.set(null);
+      this.datesLoadError.set(false);
+      const request = this.availability.getAvailableDates(
+        doctorId ? [doctorId] : this.doctorCandidates(),
+        serviceId, first, last, this.appointment()?.id
+      ).subscribe({
+        next: (dates) => this.availableDates.set(dates),
+        error: () => this.datesLoadError.set(true),
+      });
+      onCleanup(() => request.unsubscribe());
     });
   }
 
@@ -244,7 +316,32 @@ export class AppointmentCreateModalComponent implements OnInit {
     this.store.markTouched(field);
   }
 
+  protected toggleCalendar(): void {
+    if (!this.calendarOpen()) {
+      this.calendarMonth.set((this.formValue().date || this.today).slice(0, 7));
+    }
+    this.calendarOpen.update((open) => !open);
+  }
+
+  protected stepMonth(offset: number): void {
+    const month = new Date(this.calendar().first + 'T00:00:00Z');
+    month.setUTCMonth(month.getUTCMonth() + offset);
+    this.calendarMonth.set(month.toISOString().slice(0, 7));
+  }
+
+  protected retryDates(): void {
+    this.calendarRefresh.update((value) => value + 1);
+  }
+
+  protected onGroupBlur(event: FocusEvent, field: 'date' | 'timeSlot'): void {
+    if ((event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) return;
+    this.onFieldBlur(field);
+    if (field === 'date') this.calendarOpen.set(false);
+  }
+
   protected onDateChange(date: string): void {
+    if (!this.availableDates()?.has(date) || date < this.today) return;
+    this.calendarOpen.set(false);
     this.slotError.set(null);
     this.slotsLoadError.set(null);
     this.store.setDate(date);
@@ -260,42 +357,30 @@ export class AppointmentCreateModalComponent implements OnInit {
   protected onSlotSelected(slot: string): void {
     this.slotError.set(null);
     this.store.markTouched('timeSlot');
-    this.store.availableDoctors.set(null);
     this.store.selectSlot(slot);
-
-    const value = this.store.value();
-    const candidates = this.store.options().doctors.map((doctor) => doctor.id);
-
-    if (candidates.length === 0) {
-      this.store.availableDoctors.set(new Set<string>());
-      return;
-    }
-
-    this.availability
-      .getDoctorAvailability(candidates, value.serviceId, value.date, slot)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (available) => this.store.availableDoctors.set(available),
-        error: () => this.store.availableDoctors.set(new Set<string>()),
-      });
   }
 
   protected async onConfirm(): Promise<void> {
     this.store.markAllTouched();
 
-    if (!this.store.confirmEnabled()) {
+    if (!this.confirmEnabled()) {
       return;
     }
 
     this.slotError.set(null);
     this.store.isSubmitting.set(true);
 
-    const outcome = await this.facade.create(this.store.payload());
+    const appointment = this.appointment();
+    const payload = this.store.payload();
+    const outcome = appointment === null
+      ? await this.facade.create(payload)
+      : await this.facade.reschedule(appointment.id, payload);
 
     this.store.isSubmitting.set(false);
 
     switch (outcome.kind) {
       case 'created':
+        this.availability.invalidate();
         this.created.emit();
         this.closed.emit();
         return;
@@ -316,19 +401,30 @@ export class AppointmentCreateModalComponent implements OnInit {
   }
 
   protected async onRequestClose(): Promise<void> {
-    if (this.store.isSubmitting()) {
-      return;
-    }
+    if (this.store.isSubmitting() || this.closeConfirmationOpen) return;
 
-    const confirmed = await this.dialogs.confirmExit();
-
-    if (confirmed) {
-      this.closed.emit();
+    this.closeConfirmationOpen = true;
+    try {
+      const confirmed = this.appointment() === null
+        ? await this.dialogs.confirmExit()
+        : await this.dialogs.confirm({
+            title: 'Cancel changes',
+            message: 'Do you really want to cancel? Entered data won’t be saved.',
+            confirmText: 'Yes',
+            cancelText: 'No',
+          });
+      if (confirmed) this.closed.emit();
+    } finally {
+      this.closeConfirmationOpen = false;
     }
   }
 
   protected onEscape(event: Event): void {
     event.preventDefault();
+    if (this.calendarOpen()) {
+      this.calendarOpen.set(false);
+      return;
+    }
     void this.onRequestClose();
   }
 
@@ -391,6 +487,8 @@ export class AppointmentCreateModalComponent implements OnInit {
       .subscribe({
         next: (catalogs) => {
           this.store.setCatalogs(catalogs);
+          const appointment = this.appointment();
+          if (appointment !== null) this.store.prefill(appointment);
           this.isCatalogsLoading.set(false);
         },
         error: (error: unknown) => {
@@ -420,13 +518,14 @@ export class AppointmentCreateModalComponent implements OnInit {
     }
 
     if (query.doctorId.length > 0) {
-      return this.availability.getSlots(query.doctorId, query.serviceId, query.date);
+      return this.availability.getSlots(query.doctorId, query.serviceId, query.date, this.appointment()?.id);
     }
 
     return this.availability.getSlotsForCandidates(
       query.candidateDoctorIds,
       query.serviceId,
-      query.date
+      query.date,
+      this.appointment()?.id
     );
   }
 
@@ -436,10 +535,11 @@ export class AppointmentCreateModalComponent implements OnInit {
       doctorId: value.doctorId,
       serviceId: value.serviceId,
       date: value.date,
-      candidateDoctorIds: this.store.options().doctors.map((doctor) => doctor.id),
+      candidateDoctorIds: this.doctorCandidates(),
     };
 
     this.availability.invalidate();
+    this.retryDates();
     this.store.availableSlots.set([]);
     this.store.selectSlot('');
     this.isLoadingSlots.set(true);

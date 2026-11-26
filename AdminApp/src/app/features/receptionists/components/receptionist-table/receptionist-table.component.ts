@@ -25,12 +25,14 @@ export class ReceptionistTableComponent {
   }
 
   protected onRowActivate(row: ReceptionistRow): void {
-    this.profileRequested.emit(row.id);
+    if (row.id !== null) {
+      this.profileRequested.emit(row.id);
+    }
   }
 
   protected onProfile(event: Event, row: ReceptionistRow): void {
     event.stopPropagation();
-    this.profileRequested.emit(row.id);
+    this.onRowActivate(row);
   }
 
   protected onDelete(event: Event, row: ReceptionistRow): void {

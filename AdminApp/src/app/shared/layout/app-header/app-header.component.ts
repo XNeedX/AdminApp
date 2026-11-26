@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 /** A primary navigation entry rendered by the header. */
@@ -20,6 +20,13 @@ export class AppHeaderComponent {
   readonly canViewProfile = input<boolean>(false);
   readonly navItems = input<readonly HeaderNavItem[]>([]);
 
+  protected readonly initials = computed(() => {
+    const account = this.email().split('@')[0];
+    const parts = account.split(/[._-]+/).filter(Boolean);
+    return (parts.length > 1 ? parts[0][0] + parts[1][0] : account.slice(0, 2)).toUpperCase();
+  });
+
+  readonly skipToContent = output<void>();
   readonly signOut = output<void>();
   readonly openProfile = output<void>();
 

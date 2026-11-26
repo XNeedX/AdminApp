@@ -1,0 +1,69 @@
+<form [formGroup]="form()" (ngSubmit)="confirmed.emit()" novalidate class="space-y-6">
+  <fieldset [disabled]="busy()" class="space-y-6">
+    <div>
+      <label for="office-photo" class="mb-2 block text-sm font-medium text-gray-700">Photo</label>
+      @if (photoUrl(); as url) {
+        <img [src]="url" alt="Office photo" class="mb-3 h-36 w-52 rounded-lg border border-gray-200 object-cover" />
+      }
+      <div class="flex flex-wrap items-center gap-3">
+        <input #photo id="office-photo" type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoChange(photo)" class="max-w-full text-sm text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-semibold file:text-blue-700" />
+        @if (photoUrl() || photoError()) {
+          <button type="button" (click)="photoRemoved.emit()" class="cursor-pointer text-sm font-semibold text-gray-700 hover:underline">Remove photo</button>
+        }
+      </div>
+      @if (photoError(); as message) {
+        <p class="mt-2 text-sm text-red-700" role="alert">{{ message }}</p>
+      }
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      @for (field of addressFields; track field.name) {
+        @let control = form().controls[field.name];
+        @let showError = control.touched && control.invalid;
+        <div>
+          <label [for]="'office-' + field.name" class="mb-1 block text-sm font-medium text-gray-700">{{ field.label }}</label>
+          <input [id]="'office-' + field.name" [formControlName]="field.name" [class]="inputClass" [attr.aria-invalid]="showError ? 'true' : null" [attr.aria-describedby]="showError ? 'office-error-' + field.name : null" required />
+          @if (showError) {
+            <p [id]="'office-error-' + field.name" class="mt-1 text-sm text-red-700">Enter {{ field.label.toLowerCase() }}.</p>
+          }
+        </div>
+      }
+
+      <div>
+        @let phone = form().controls.registryDigits;
+        @let showPhoneError = phone.touched && phone.invalid;
+        <label for="office-registry-phone" class="mb-1 block text-sm font-medium text-gray-700">Registry phone number</label>
+        <div class="flex items-center">
+          <span aria-hidden="true" class="rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-600">+</span>
+          <input id="office-registry-phone" type="tel" inputmode="numeric" formControlName="registryDigits" [class]="inputClass + ' rounded-l-none'" [attr.aria-invalid]="showPhoneError ? 'true' : null" [attr.aria-describedby]="showPhoneError ? 'office-phone-error' : null" required />
+        </div>
+        @if (showPhoneError) {
+          <p id="office-phone-error" class="mt-1 text-sm text-red-700">Enter 10 to 15 digits after the +.</p>
+        }
+      </div>
+
+      <fieldset>
+        <legend class="mb-2 text-sm font-medium text-gray-700">Status</legend>
+        <div class="flex gap-4">
+          @for (option of statusOptions; track option.value) {
+            <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+              <input type="radio" formControlName="status" [value]="option.value" class="size-4 accent-blue-600" />
+              {{ option.label }}
+            </label>
+          }
+        </div>
+      </fieldset>
+    </div>
+  </fieldset>
+
+  @if (saveError(); as message) {
+    <p role="alert" class="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{{ message }}</p>
+  }
+
+  <footer class="flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-5">
+    <button type="button" [disabled]="busy()" (click)="cancelled.emit()" class="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
+    <button type="submit" [disabled]="form().invalid || busy() || photoError() !== null" class="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+      {{ busy() ? 'Saving…' : 'Confirm' }}
+    </button>
+  </footer>
+</form>

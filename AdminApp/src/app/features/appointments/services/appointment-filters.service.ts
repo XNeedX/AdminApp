@@ -4,6 +4,7 @@ import { AppointmentsReceptionistGet$Params } from '../../../api/generated/appoi
 import { DoctorOption, ServiceOption } from '../models/appointment-catalog.model';
 import { AppointmentFilterState } from '../models/appointment-filter.model';
 import { AppointmentRow } from '../models/appointment.model';
+import { toApiAppointmentDate } from '../utils/appointment-date';
 
 const exactCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
@@ -27,8 +28,7 @@ export class AppointmentFiltersService {
     const params: AppointmentsReceptionistGet$Params = {};
 
     if (state.date.length > 0) {
-      // ФИКС ЗДЕСЬ: добавляем T00:00:00Z, чтобы бэкенд распознал дату как UTC
-      params.date = state.date + 'T00:00:00Z';
+      params.date = toApiAppointmentDate(state.date);
     }
 
     if (state.doctorId.length > 0) {

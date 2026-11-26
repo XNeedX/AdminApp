@@ -109,6 +109,11 @@ describe('AppointmentsPageComponent', () => {
   it('generates the list and forwards the current filters', async () => {
     api.appointmentsReceptionistGet.mockReturnValue(of(envelope([ROW])));
 
+    const status = (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
+      '#appointment-filter-status'
+    );
+    expect(status?.value).toBe('all');
+
     buttonByText(fixture, 'Generate')?.click();
     await settle(fixture);
 

@@ -2,10 +2,10 @@
   role="dialog"
   aria-modal="true"
   [attr.aria-labelledby]="titleId"
-  class="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-xl bg-white shadow-xl"
+  class="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-xl"
 >
   @if (hasHeader()) {
-    <header class="flex items-start justify-between gap-4 border-b border-gray-200 px-4 py-4 sm:px-6">
+    <header class="flex items-start justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
       <div class="min-w-0">
         @if (title().length > 0) {
           <h2 [id]="titleId" class="truncate text-lg font-semibold text-gray-900">
@@ -22,7 +22,7 @@
           type="button"
           (click)="onClose()"
           [attr.aria-label]="closeLabel()"
-          class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
         >
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -37,7 +37,7 @@
   </div>
 
   <footer
-    class="flex flex-col-reverse gap-3 border-t border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6"
+    class="flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6"
   >
     <ng-content select="[dialogFooter]" />
   </footer>

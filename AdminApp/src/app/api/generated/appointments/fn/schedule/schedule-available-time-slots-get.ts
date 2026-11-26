@@ -13,6 +13,7 @@ export interface ScheduleAvailableTimeSlotsGet$Params {
   doctorId?: string;
   serviceId?: string;
   date?: string;
+  excludeAppointmentId?: string;
 }
 
 export function scheduleAvailableTimeSlotsGet(http: HttpClient, rootUrl: string, params?: ScheduleAvailableTimeSlotsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponseOfIEnumerableOfString>> {
@@ -21,6 +22,7 @@ export function scheduleAvailableTimeSlotsGet(http: HttpClient, rootUrl: string,
     rb.query('doctorId', params.doctorId, {});
     rb.query('serviceId', params.serviceId, {});
     rb.query('date', params.date, {});
+    rb.query('excludeAppointmentId', params.excludeAppointmentId, {});
   }
 
   return http.request(

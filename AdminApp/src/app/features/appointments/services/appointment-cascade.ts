@@ -108,7 +108,7 @@ export function buildCascadeOptions(input: {
     doctors = doctors.filter((candidate) => candidate.officeId === value.officeId);
   }
 
-  if (availabilityResolved) {
+  if (availabilityResolved && (value.doctorId.length === 0 || !availableDoctors.has(value.doctorId))) {
     const available = availableDoctors;
     doctors = doctors.filter((candidate) => available.has(candidate.id));
   }
@@ -187,7 +187,8 @@ export function reduceAppointmentCascade(input: CascadeInput): CascadePlan {
   const clear: CascadeWrite[] = [];
   const autoFill: CascadeWrite[] = [];
 
-  const isWritable = (field: AppointmentFormField): boolean => field !== lastEditedField;
+  const isWritable = (field: AppointmentFormField): boolean =>
+    field !== lastEditedField && !input.lockedFields?.has(field);
 
   const record = (bucket: CascadeWrite[], field: AppointmentFormField, value: string): void => {
     const existing = bucket.findIndex((write) => write.field === field);
@@ -238,8 +239,6 @@ export function reduceAppointmentCascade(input: CascadeInput): CascadePlan {
     state.date.length > 0 &&
     state.timeSlot.length > 0 &&
     state.doctorId.length > 0;
-
-  let doctorDroppedForAvailability = false;
 
   for (let pass = 0; pass < MAX_PASSES; pass += 1) {
     let changed = false;
@@ -357,20 +356,10 @@ export function reduceAppointmentCascade(input: CascadeInput): CascadePlan {
       availableDoctors !== null &&
       !availableDoctors.has(state.doctorId)
     ) {
-      const cleared = clearField('doctor');
-      doctorDroppedForAvailability = doctorDroppedForAvailability || cleared;
-      changed = cleared || changed;
+      changed = clearField('doctor') || changed;
     }
 
     // C6/C7/C8 — derived value invalidation.
-    if (
-      state.doctorId.length === 0 &&
-      state.timeSlot.length > 0 &&
-      !doctorDroppedForAvailability
-    ) {
-      changed = clearField('timeSlot') || changed;
-    }
-
     if (state.date.length === 0 && state.timeSlot.length > 0) {
       changed = clearField('timeSlot') || changed;
     }
@@ -406,7 +395,7 @@ export function reduceAppointmentCascade(input: CascadeInput): CascadePlan {
     // A4 — a single remaining doctor after the date/slot choice is selected.
     const options = buildCascadeOptions({ value: state, catalogs, availableDoctors });
 
-    if (state.date.length > 0 && state.timeSlot.length > 0 && options.doctors.length === 1) {
+    if (state.doctorId.length === 0 && availableDoctors !== null && state.date.length > 0 && state.timeSlot.length > 0 && options.doctors.length === 1) {
       const onlyDoctor = options.doctors[0];
 
       if (onlyDoctor !== undefined) {
@@ -441,11 +430,15 @@ export function reduceAppointmentCascade(input: CascadeInput): CascadePlan {
       state.serviceId.length > 0 &&
       state.date.length > 0,
     dateVisible: true,
-    isComplete: isComplete(state, options) && !hasPendingWrites,
+    isComplete: isComplete(state, options, input.lockedFields) && !hasPendingWrites,
   };
 }
 
-function isComplete(value: AppointmentFormValue, options: CascadeOptions): boolean {
+function isComplete(
+  value: AppointmentFormValue,
+  options: CascadeOptions,
+  lockedFields?: ReadonlySet<AppointmentFormField>
+): boolean {
   if (
     value.patientId.length === 0 ||
     value.specializationId.length === 0 ||
@@ -461,19 +454,19 @@ function isComplete(value: AppointmentFormValue, options: CascadeOptions): boole
   const doctor = options.doctors.find((candidate) => candidate.id === value.doctorId);
   const service = options.services.find((candidate) => candidate.id === value.serviceId);
 
-  if (doctor === undefined || service === undefined) {
+  if (doctor === undefined || (service === undefined && !lockedFields?.has('service'))) {
     return false;
   }
 
-  if (!options.patients.some((candidate) => candidate.id === value.patientId)) {
+  if (!lockedFields?.has('patient') && !options.patients.some((candidate) => candidate.id === value.patientId)) {
     return false;
   }
 
-  if (!options.specializations.some((candidate) => candidate.id === value.specializationId)) {
+  if (!lockedFields?.has('specialization') && !options.specializations.some((candidate) => candidate.id === value.specializationId)) {
     return false;
   }
 
-  if (!options.offices.some((candidate) => candidate.id === value.officeId)) {
+  if (!lockedFields?.has('office') && !options.offices.some((candidate) => candidate.id === value.officeId)) {
     return false;
   }
 
@@ -481,7 +474,7 @@ function isComplete(value: AppointmentFormValue, options: CascadeOptions): boole
     return false;
   }
 
-  if (service.specializationId !== value.specializationId) {
+  if (service !== undefined && service.specializationId !== value.specializationId) {
     return false;
   }
 

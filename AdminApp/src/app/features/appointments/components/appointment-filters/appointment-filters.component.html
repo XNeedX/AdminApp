@@ -1,5 +1,8 @@
-<div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+<section class="clinic-card p-4 sm:p-6" aria-labelledby="appointment-filters-title">
+  <div class="clinic-section-heading mb-4">
+    <h2 id="appointment-filters-title">Schedule filters</h2>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
     <div class="flex flex-col gap-1">
       <app-app-date-field
         [id]="'appointment-filter-date'"
@@ -52,7 +55,7 @@
         class="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       >
         @for (option of statusOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
+          <option [value]="option.value" [selected]="option.value === state().status">{{ option.label }}</option>
         }
       </select>
     </div>
@@ -78,18 +81,14 @@
   <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
     <button
       type="button"
-      (click)="onCreateRequested()"
-      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-    >
-      Create an appointment
-    </button>
-    <button
-      type="button"
       (click)="onGenerate()"
       [disabled]="isLoading()"
-      class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-300"
+      class="clinic-button clinic-button-tonal"
     >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 6h16M7 12h10m-7 6h4" />
+      </svg>
       {{ isLoading() ? 'Generating…' : 'Generate' }}
     </button>
   </div>
-</div>
+</section>

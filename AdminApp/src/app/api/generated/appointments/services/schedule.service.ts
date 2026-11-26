@@ -15,10 +15,8 @@ import { scheduleAvailableDatesGet } from '../fn/schedule/schedule-available-dat
 import { ScheduleAvailableDatesGet$Params } from '../fn/schedule/schedule-available-dates-get';
 import { scheduleAvailableTimeSlotsGet } from '../fn/schedule/schedule-available-time-slots-get';
 import { ScheduleAvailableTimeSlotsGet$Params } from '../fn/schedule/schedule-available-time-slots-get';
-import { scheduleDoctorDoctorIdGet } from '../fn/schedule/schedule-doctor-doctor-id-get';
-import { ScheduleDoctorDoctorIdGet$Params } from '../fn/schedule/schedule-doctor-doctor-id-get';
-import { schedulePatientPatientIdHistoryGet } from '../fn/schedule/schedule-patient-patient-id-history-get';
-import { SchedulePatientPatientIdHistoryGet$Params } from '../fn/schedule/schedule-patient-patient-id-history-get';
+import { scheduleMeHistoryGet } from '../fn/schedule/schedule-me-history-get';
+import { ScheduleMeHistoryGet$Params } from '../fn/schedule/schedule-me-history-get';
 
 @Injectable({ providedIn: 'root' })
 export class ScheduleService extends BaseService {
@@ -62,7 +60,7 @@ export class ScheduleService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  scheduleAvailableDatesGet$Response(params?: ScheduleAvailableDatesGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  scheduleAvailableDatesGet$Response(params?: ScheduleAvailableDatesGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponseOfIEnumerableOfString>> {
     const obs = scheduleAvailableDatesGet(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -73,62 +71,35 @@ export class ScheduleService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  scheduleAvailableDatesGet(params?: ScheduleAvailableDatesGet$Params, context?: HttpContext): Observable<void> {
+  scheduleAvailableDatesGet(params?: ScheduleAvailableDatesGet$Params, context?: HttpContext): Observable<ApiResponseOfIEnumerableOfString> {
     const resp = this.scheduleAvailableDatesGet$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
+      map((r: StrictHttpResponse<ApiResponseOfIEnumerableOfString>): ApiResponseOfIEnumerableOfString => r.body)
     );
   }
 
-  /** Path part for operation `scheduleDoctorDoctorIdGet()` */
-  static readonly ScheduleDoctorDoctorIdGetPath = '/Schedule/doctor/{doctorId}';
+  /** Path part for operation `scheduleMeHistoryGet()` */
+  static readonly ScheduleMeHistoryGetPath = '/Schedule/me/history';
 
   /**
    * This method provides access to the full `HttpResponse`, allowing access to response headers.
-   * To access only the response body, use `scheduleDoctorDoctorIdGet()` instead.
+   * To access only the response body, use `scheduleMeHistoryGet()` instead.
    *
    * This method doesn't expect any request body.
    */
-  scheduleDoctorDoctorIdGet$Response(params: ScheduleDoctorDoctorIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-    const obs = scheduleDoctorDoctorIdGet(this.http, this.rootUrl, params, context);
+  scheduleMeHistoryGet$Response(params?: ScheduleMeHistoryGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+    const obs = scheduleMeHistoryGet(this.http, this.rootUrl, params, context);
     return obs;
   }
 
   /**
    * This method provides access only to the response body.
-   * To access the full response (for headers, for example), `scheduleDoctorDoctorIdGet$Response()` instead.
+   * To access the full response (for headers, for example), `scheduleMeHistoryGet$Response()` instead.
    *
    * This method doesn't expect any request body.
    */
-  scheduleDoctorDoctorIdGet(params: ScheduleDoctorDoctorIdGet$Params, context?: HttpContext): Observable<void> {
-    const resp = this.scheduleDoctorDoctorIdGet$Response(params, context);
-    return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
-    );
-  }
-
-  /** Path part for operation `schedulePatientPatientIdHistoryGet()` */
-  static readonly SchedulePatientPatientIdHistoryGetPath = '/Schedule/patient/{patientId}/history';
-
-  /**
-   * This method provides access to the full `HttpResponse`, allowing access to response headers.
-   * To access only the response body, use `schedulePatientPatientIdHistoryGet()` instead.
-   *
-   * This method doesn't expect any request body.
-   */
-  schedulePatientPatientIdHistoryGet$Response(params: SchedulePatientPatientIdHistoryGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-    const obs = schedulePatientPatientIdHistoryGet(this.http, this.rootUrl, params, context);
-    return obs;
-  }
-
-  /**
-   * This method provides access only to the response body.
-   * To access the full response (for headers, for example), `schedulePatientPatientIdHistoryGet$Response()` instead.
-   *
-   * This method doesn't expect any request body.
-   */
-  schedulePatientPatientIdHistoryGet(params: SchedulePatientPatientIdHistoryGet$Params, context?: HttpContext): Observable<void> {
-    const resp = this.schedulePatientPatientIdHistoryGet$Response(params, context);
+  scheduleMeHistoryGet(params?: ScheduleMeHistoryGet$Params, context?: HttpContext): Observable<void> {
+    const resp = this.scheduleMeHistoryGet$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<void>): void => r.body)
     );

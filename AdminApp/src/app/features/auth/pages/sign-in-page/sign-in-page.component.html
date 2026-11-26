@@ -1,23 +1,33 @@
 <div
-  class="flex min-h-screen items-center justify-center bg-slate-900/70 px-4 py-8 sm:px-6"
+  class="clinic-auth-layout"
   role="dialog"
   aria-modal="true"
   aria-labelledby="sign-in-title"
 >
-  <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
-    <div class="mb-6 flex flex-col gap-1">
-      <h1 id="sign-in-title" class="text-2xl font-semibold text-gray-900">Sign in</h1>
-      <p class="text-sm text-gray-500">Use your clinic account to continue.</p>
+  <div class="clinic-auth-panel">
+    <div class="clinic-auth-brand">
+      <span class="clinic-brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+          <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6Z" />
+        </svg>
+      </span>
+      <div><span class="clinic-brand-name">InnoClinic</span><span class="clinic-brand-caption">Administration</span></div>
     </div>
+    <div class="clinic-auth-form">
+      <div class="mb-6 flex flex-col gap-1">
+        <h1 id="sign-in-title">Sign in</h1>
+        <p class="text-sm text-gray-500">Use your clinic account to continue.</p>
+      </div>
 
-    @if (form(); as signInForm) {
-      <app-sign-in-form
-        [form]="signInForm"
-        [submitting]="isBusy()"
-        [submitError]="submitError()"
-        (submitted)="onSubmit()"
-        (fieldChanged)="onFieldChanged()"
-      />
-    }
+      @if (form(); as signInForm) {
+        <app-sign-in-form
+          [form]="signInForm"
+          [submitting]="isBusy()"
+          [submitError]="submitError()"
+          (submitted)="onSubmit()"
+          (fieldChanged)="onFieldChanged()"
+        />
+      }
+    </div>
   </div>
 </div>

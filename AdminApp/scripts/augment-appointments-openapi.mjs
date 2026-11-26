@@ -156,6 +156,11 @@ function ensureSchemas(definition) {
       patientPhoneNumber: { type: 'string' },
       serviceName: { type: 'string' },
       isApproved: { type: 'boolean' },
+      patientId: GUID_SCHEMA,
+      doctorId: GUID_SCHEMA,
+      serviceId: GUID_SCHEMA,
+      officeId: GUID_SCHEMA,
+      date: { type: 'string', format: 'date-time' },
     },
     additionalProperties: false,
   };
@@ -211,12 +216,14 @@ function rewriteResponses(definition) {
     };
   }
 
-  const approvePath = paths['/api/Appointments/{id}/approve'];
-  if (approvePath?.patch !== undefined) {
-    approvePath.patch.responses = {
-      200: jsonBody('#/components/schemas/ApiResponse'),
-      ...failureResponses(),
-    };
+  for (const action of ['approve', 'reschedule']) {
+    const operation = paths['/api/Appointments/{id}/' + action]?.patch;
+    if (operation !== undefined) {
+      operation.responses = {
+        200: jsonBody('#/components/schemas/ApiResponse'),
+        ...failureResponses(),
+      };
+    }
   }
 
   const deletePath = paths['/api/Appointments/{id}'];
@@ -235,12 +242,14 @@ function rewriteResponses(definition) {
     };
   }
 
-  const slotsPath = paths['/api/Schedule/available-time-slots'];
-  if (slotsPath?.get !== undefined) {
-    slotsPath.get.responses = {
-      200: jsonBody('#/components/schemas/ApiResponseOfIEnumerableOfString'),
-      ...failureResponses(),
-    };
+  for (const resource of ['available-time-slots', 'available-dates']) {
+    const operation = paths['/api/Schedule/' + resource]?.get;
+    if (operation !== undefined) {
+      operation.responses = {
+        200: jsonBody('#/components/schemas/ApiResponseOfIEnumerableOfString'),
+        ...failureResponses(),
+      };
+    }
   }
 
   const catalogResponses = [

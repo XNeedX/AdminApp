@@ -7,28 +7,29 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
+import { ApiResponse } from '../../models/api-response';
 import { CreateAppointmentResultDto } from '../../models/create-appointment-result-dto';
 
-export interface AppointmentsAppointmentIdResultsPost$Params {
+export interface DoctorPortalResultsAppointmentIdPost$Plain$Params {
   appointmentId: string;
       body?: CreateAppointmentResultDto
 }
 
-export function appointmentsAppointmentIdResultsPost(http: HttpClient, rootUrl: string, params: AppointmentsAppointmentIdResultsPost$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-  const rb = new RequestBuilder(rootUrl, appointmentsAppointmentIdResultsPost.PATH, 'post');
+export function doctorPortalResultsAppointmentIdPost$Plain(http: HttpClient, rootUrl: string, params: DoctorPortalResultsAppointmentIdPost$Plain$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponse>> {
+  const rb = new RequestBuilder(rootUrl, doctorPortalResultsAppointmentIdPost$Plain.PATH, 'post');
   if (params) {
     rb.path('appointmentId', params.appointmentId, {});
     rb.body(params.body, 'application/*+json');
   }
 
   return http.request(
-    rb.build({ responseType: 'text', accept: '*/*', context })
+    rb.build({ responseType: 'text', accept: 'text/plain', context })
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return (r as HttpResponse<any>).clone({ body: undefined }) as StrictHttpResponse<void>;
+      return r as StrictHttpResponse<ApiResponse>;
     })
   );
 }
 
-appointmentsAppointmentIdResultsPost.PATH = '/appointments/{appointmentId}/results';
+doctorPortalResultsAppointmentIdPost$Plain.PATH = '/DoctorPortal/results/{appointmentId}';

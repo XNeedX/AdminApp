@@ -10,12 +10,8 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
-import { appointmentsAppointmentIdResultsGet } from '../fn/appointments-result/appointments-appointment-id-results-get';
-import { AppointmentsAppointmentIdResultsGet$Params } from '../fn/appointments-result/appointments-appointment-id-results-get';
-import { appointmentsAppointmentIdResultsPost } from '../fn/appointments-result/appointments-appointment-id-results-post';
-import { AppointmentsAppointmentIdResultsPost$Params } from '../fn/appointments-result/appointments-appointment-id-results-post';
-import { appointmentsResultsResultIdPut } from '../fn/appointments-result/appointments-results-result-id-put';
-import { AppointmentsResultsResultIdPut$Params } from '../fn/appointments-result/appointments-results-result-id-put';
+import { appointmentsAppointmentIdMyResultGet } from '../fn/appointments-result/appointments-appointment-id-my-result-get';
+import { AppointmentsAppointmentIdMyResultGet$Params } from '../fn/appointments-result/appointments-appointment-id-my-result-get';
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentsResultService extends BaseService {
@@ -23,82 +19,28 @@ export class AppointmentsResultService extends BaseService {
     super(config, http);
   }
 
-  /** Path part for operation `appointmentsAppointmentIdResultsGet()` */
-  static readonly AppointmentsAppointmentIdResultsGetPath = '/appointments/{appointmentId}/results';
+  /** Path part for operation `appointmentsAppointmentIdMyResultGet()` */
+  static readonly AppointmentsAppointmentIdMyResultGetPath = '/appointments/{appointmentId}/my-result';
 
   /**
    * This method provides access to the full `HttpResponse`, allowing access to response headers.
-   * To access only the response body, use `appointmentsAppointmentIdResultsGet()` instead.
+   * To access only the response body, use `appointmentsAppointmentIdMyResultGet()` instead.
    *
    * This method doesn't expect any request body.
    */
-  appointmentsAppointmentIdResultsGet$Response(params: AppointmentsAppointmentIdResultsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-    const obs = appointmentsAppointmentIdResultsGet(this.http, this.rootUrl, params, context);
+  appointmentsAppointmentIdMyResultGet$Response(params: AppointmentsAppointmentIdMyResultGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+    const obs = appointmentsAppointmentIdMyResultGet(this.http, this.rootUrl, params, context);
     return obs;
   }
 
   /**
    * This method provides access only to the response body.
-   * To access the full response (for headers, for example), `appointmentsAppointmentIdResultsGet$Response()` instead.
+   * To access the full response (for headers, for example), `appointmentsAppointmentIdMyResultGet$Response()` instead.
    *
    * This method doesn't expect any request body.
    */
-  appointmentsAppointmentIdResultsGet(params: AppointmentsAppointmentIdResultsGet$Params, context?: HttpContext): Observable<void> {
-    const resp = this.appointmentsAppointmentIdResultsGet$Response(params, context);
-    return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
-    );
-  }
-
-  /** Path part for operation `appointmentsAppointmentIdResultsPost()` */
-  static readonly AppointmentsAppointmentIdResultsPostPath = '/appointments/{appointmentId}/results';
-
-  /**
-   * This method provides access to the full `HttpResponse`, allowing access to response headers.
-   * To access only the response body, use `appointmentsAppointmentIdResultsPost()` instead.
-   *
-   * This method sends `application/*+json` and handles request body of type `application/*+json`.
-   */
-  appointmentsAppointmentIdResultsPost$Response(params: AppointmentsAppointmentIdResultsPost$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-    const obs = appointmentsAppointmentIdResultsPost(this.http, this.rootUrl, params, context);
-    return obs;
-  }
-
-  /**
-   * This method provides access only to the response body.
-   * To access the full response (for headers, for example), `appointmentsAppointmentIdResultsPost$Response()` instead.
-   *
-   * This method sends `application/*+json` and handles request body of type `application/*+json`.
-   */
-  appointmentsAppointmentIdResultsPost(params: AppointmentsAppointmentIdResultsPost$Params, context?: HttpContext): Observable<void> {
-    const resp = this.appointmentsAppointmentIdResultsPost$Response(params, context);
-    return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
-    );
-  }
-
-  /** Path part for operation `appointmentsResultsResultIdPut()` */
-  static readonly AppointmentsResultsResultIdPutPath = '/appointments/results/{resultId}';
-
-  /**
-   * This method provides access to the full `HttpResponse`, allowing access to response headers.
-   * To access only the response body, use `appointmentsResultsResultIdPut()` instead.
-   *
-   * This method sends `application/*+json` and handles request body of type `application/*+json`.
-   */
-  appointmentsResultsResultIdPut$Response(params: AppointmentsResultsResultIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-    const obs = appointmentsResultsResultIdPut(this.http, this.rootUrl, params, context);
-    return obs;
-  }
-
-  /**
-   * This method provides access only to the response body.
-   * To access the full response (for headers, for example), `appointmentsResultsResultIdPut$Response()` instead.
-   *
-   * This method sends `application/*+json` and handles request body of type `application/*+json`.
-   */
-  appointmentsResultsResultIdPut(params: AppointmentsResultsResultIdPut$Params, context?: HttpContext): Observable<void> {
-    const resp = this.appointmentsResultsResultIdPut$Response(params, context);
+  appointmentsAppointmentIdMyResultGet(params: AppointmentsAppointmentIdMyResultGet$Params, context?: HttpContext): Observable<void> {
+    const resp = this.appointmentsAppointmentIdMyResultGet$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<void>): void => r.body)
     );

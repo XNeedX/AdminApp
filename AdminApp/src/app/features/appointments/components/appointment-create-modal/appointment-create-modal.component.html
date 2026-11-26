@@ -7,7 +7,7 @@
   <div class="w-full max-w-3xl">
     <app-dialog
       title="Create an appointment"
-      subtitle="Select the patient, doctor, service, office, date and time slot."
+      [subtitle]="appointment() ? 'Choose a doctor, date and time for the existing appointment.' : 'Select the patient, doctor, service, office, date and time slot.'"
       (close)="onRequestClose()"
     >
       @if (isCatalogsLoading()) {
@@ -128,9 +128,13 @@
               [attr.aria-describedby]="officeError() !== null ? 'appointment-office-error' : null"
               class="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
-              <option value="">Choose the office</option>
-              @for (office of officeOptions(); track office.id) {
-                <option [value]="office.id">{{ office.displayName }}</option>
+              @if (appointment()) {
+                <option [value]="formValue().officeId">{{ fixedOffice() || formValue().officeId }}</option>
+              } @else {
+                <option value="">Choose the office</option>
+                @for (office of officeOptions(); track office.id) {
+                  <option [value]="office.id">{{ office.displayName }}</option>
+                }
               }
             </select>
             @if (officeError(); as message) {
@@ -138,23 +142,75 @@
             }
           </div>
 
-          <div class="flex flex-col gap-1">
-            <app-app-date-field
-              [id]="'appointment-date'"
-              label="Date"
-              [value]="formValue().date"
-              [disabled]="!cascade().dateEnabled"
-              [invalid]="dateError() !== null"
-              [describedBy]="dateError() !== null ? 'appointment-date-error' : null"
-              [min]="today"
-              (valueChange)="onDateChange($event)"
-            />
+          <div class="flex flex-col gap-1" (focusout)="onGroupBlur($event, 'date')">
+            <label for="appointment-date" class="block text-sm font-medium text-gray-700">Date</label>
+            <button
+              id="appointment-date"
+              type="button"
+              [disabled]="!cascade().dateEnabled || !serviceSchedulable()"
+              [attr.aria-expanded]="calendarOpen()"
+              [attr.aria-controls]="calendarOpen() ? 'appointment-calendar' : null"
+              [attr.aria-invalid]="dateError() !== null ? 'true' : null"
+              [attr.aria-describedby]="dateError() !== null ? 'appointment-date-error' : null"
+              [class.border-red-500]="dateError() !== null"
+              [class.border-gray-300]="dateError() === null"
+              (click)="toggleCalendar()"
+              class="w-full rounded-md border bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100"
+            >{{ formValue().date || 'Select the date' }}</button>
+            @if (calendarOpen()) {
+              <div id="appointment-calendar" class="rounded-md border border-gray-200 bg-white p-2">
+                <div class="mb-2 flex items-center justify-between">
+                  <button type="button" aria-label="Previous month"
+                    [disabled]="calendarMonth() <= today.slice(0, 7)"
+                    class="rounded px-3 py-1 text-gray-700 hover:bg-gray-100 disabled:text-gray-300"
+                    (click)="stepMonth(-1)">‹</button>
+                  <span class="text-sm font-medium" aria-live="polite">{{ calendar().label }}</span>
+                  <button type="button" aria-label="Next month"
+                    class="rounded px-3 py-1 text-gray-700 hover:bg-gray-100"
+                    (click)="stepMonth(1)">›</button>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-sm">
+                  @for (name of ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']; track name) {
+                    <span class="text-xs text-gray-500" aria-hidden="true">{{ name }}</span>
+                  }
+                  @for (blank of calendar().leadingDays; track blank) {
+                    <span aria-hidden="true"></span>
+                  }
+                  @for (date of calendar().dates; track date.value) {
+                    <button
+                      type="button"
+                      [attr.aria-label]="date.value"
+                      [attr.aria-pressed]="date.value === formValue().date"
+                      [disabled]="date.value < today || availableDates()?.has(date.value) !== true"
+                      (click)="onDateChange(date.value)"
+                      class="min-h-8 rounded text-gray-800 enabled:cursor-pointer enabled:hover:bg-blue-50 aria-pressed:bg-blue-100 disabled:text-gray-400"
+                    >{{ date.day }}</button>
+                  }
+                </div>
+                @if (datesLoadError()) {
+                  <p class="mt-2 text-sm text-red-600" role="alert">Could not load available dates.</p>
+                  <button type="button" class="text-sm font-medium text-blue-700" (click)="retryDates()">Try again</button>
+                } @else if (availableDates() === null) {
+                  <p class="mt-2 text-sm text-gray-500" role="status">Loading available dates…</p>
+                }
+              </div>
+            }
             @if (dateError(); as message) {
               <p id="appointment-date-error" class="text-sm text-red-600">{{ message }}</p>
             }
           </div>
 
-          <div class="flex flex-col gap-2 md:col-span-2">
+          <div
+            class="flex flex-col gap-2 md:col-span-2 rounded-md border p-2"
+            [class.border-red-500]="timeSlotError() !== null"
+            [class.border-transparent]="timeSlotError() === null"
+            [attr.tabindex]="cascade().slotsEnabled ? 0 : null"
+            role="group"
+            aria-labelledby="appointment-slots-label"
+            [attr.aria-disabled]="!cascade().slotsEnabled"
+            [attr.aria-describedby]="timeSlotError() !== null ? 'appointment-slots-error' : null"
+            (focusout)="onGroupBlur($event, 'timeSlot')"
+          >
             <p id="appointment-slots-label" class="block text-sm font-medium text-gray-700">
               Time slots
             </p>
@@ -190,8 +246,6 @@
               @if (slots().length > 0) {
                 <div
                   class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6"
-                  role="group"
-                  aria-labelledby="appointment-slots-label"
                 >
                   @for (slot of slots(); track slot) {
                     <button
@@ -223,22 +277,33 @@
             }
 
             @if (timeSlotError(); as message) {
-              <p class="text-sm text-red-600">{{ message }}</p>
+              <p id="appointment-slots-error" class="text-sm text-red-600">{{ message }}</p>
             }
           </div>
         </div>
       }
 
-      <button
-        dialogFooter
-        type="button"
-        disabled
-        aria-disabled="true"
-        title="Patient creation is available from the Patients service; use the profile page"
-        class="inline-flex cursor-not-allowed items-center justify-center rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-400 sm:mr-auto"
-      >
-        Create patient
-      </button>
+      @if (appointment()) {
+        <button
+          dialogFooter
+          type="button"
+          [disabled]="isSubmitting()"
+          (click)="onRequestClose()"
+          class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+        >Cancel</button>
+      } @else {
+        <button
+          dialogFooter
+          type="button"
+          disabled
+          aria-disabled="true"
+          title="Patient creation is available from the Patients service; use the profile page"
+          class="inline-flex cursor-not-allowed items-center justify-center rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-400 sm:mr-auto"
+        >
+          Create patient
+        </button>
+
+      }
 
       <button
         dialogFooter

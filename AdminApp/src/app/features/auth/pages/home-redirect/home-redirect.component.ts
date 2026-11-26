@@ -21,7 +21,7 @@ export class HomeRedirectComponent implements OnInit {
 
   ngOnInit(): void {
     const roles = this.auth.user()?.roles ?? [];
-    const target = roles.includes('Receptionist') ? '/doctors' : '/profile';
+    const target = roles.includes('Receptionist') ? '/doctors' : '/my-schedule';
 
     void this.router.navigate([target], { replaceUrl: true });
   }

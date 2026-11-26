@@ -73,6 +73,11 @@ export class ReceptionistsPageComponent implements OnInit {
   }
 
   protected async requestDelete(row: ReceptionistRow): Promise<void> {
+    const id = row.id;
+    if (id === null) {
+      return;
+    }
+
     const confirmed = await this.dialogs.confirm({
       title: 'Delete receptionist',
       message: DELETE_DIALOG_MESSAGE,
@@ -84,7 +89,7 @@ export class ReceptionistsPageComponent implements OnInit {
       return;
     }
 
-    const deleted = await this.directory.delete(row.id);
+    const deleted = await this.directory.delete(id);
 
     if (!deleted) {
       this.notifications.showError(

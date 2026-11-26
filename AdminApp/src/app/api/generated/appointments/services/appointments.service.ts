@@ -16,6 +16,10 @@ import { appointmentsIdApprovePatch } from '../fn/appointments/appointments-id-a
 import { AppointmentsIdApprovePatch$Params } from '../fn/appointments/appointments-id-approve-patch';
 import { appointmentsIdDelete } from '../fn/appointments/appointments-id-delete';
 import { AppointmentsIdDelete$Params } from '../fn/appointments/appointments-id-delete';
+import { appointmentsIdReschedulePatch } from '../fn/appointments/appointments-id-reschedule-patch';
+import { AppointmentsIdReschedulePatch$Params } from '../fn/appointments/appointments-id-reschedule-patch';
+import { appointmentsMePost } from '../fn/appointments/appointments-me-post';
+import { AppointmentsMePost$Params } from '../fn/appointments/appointments-me-post';
 import { appointmentsPatientIdPost } from '../fn/appointments/appointments-patient-id-post';
 import { AppointmentsPatientIdPost$Params } from '../fn/appointments/appointments-patient-id-post';
 import { appointmentsReceptionistGet } from '../fn/appointments/appointments-receptionist-get';
@@ -25,6 +29,33 @@ import { AppointmentsReceptionistGet$Params } from '../fn/appointments/appointme
 export class AppointmentsService extends BaseService {
   constructor(config: ApiConfiguration, http: HttpClient) {
     super(config, http);
+  }
+
+  /** Path part for operation `appointmentsMePost()` */
+  static readonly AppointmentsMePostPath = '/Appointments/me';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `appointmentsMePost()` instead.
+   *
+   * This method sends `application/*+json` and handles request body of type `application/*+json`.
+   */
+  appointmentsMePost$Response(params?: AppointmentsMePost$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+    const obs = appointmentsMePost(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `appointmentsMePost$Response()` instead.
+   *
+   * This method sends `application/*+json` and handles request body of type `application/*+json`.
+   */
+  appointmentsMePost(params?: AppointmentsMePost$Params, context?: HttpContext): Observable<void> {
+    const resp = this.appointmentsMePost$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<void>): void => r.body)
+    );
   }
 
   /** Path part for operation `appointmentsPatientIdPost()` */
@@ -49,6 +80,33 @@ export class AppointmentsService extends BaseService {
    */
   appointmentsPatientIdPost(params: AppointmentsPatientIdPost$Params, context?: HttpContext): Observable<ApiResponse> {
     const resp = this.appointmentsPatientIdPost$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<ApiResponse>): ApiResponse => r.body)
+    );
+  }
+
+  /** Path part for operation `appointmentsIdReschedulePatch()` */
+  static readonly AppointmentsIdReschedulePatchPath = '/Appointments/{id}/reschedule';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `appointmentsIdReschedulePatch()` instead.
+   *
+   * This method sends `application/*+json` and handles request body of type `application/*+json`.
+   */
+  appointmentsIdReschedulePatch$Response(params: AppointmentsIdReschedulePatch$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponse>> {
+    const obs = appointmentsIdReschedulePatch(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `appointmentsIdReschedulePatch$Response()` instead.
+   *
+   * This method sends `application/*+json` and handles request body of type `application/*+json`.
+   */
+  appointmentsIdReschedulePatch(params: AppointmentsIdReschedulePatch$Params, context?: HttpContext): Observable<ApiResponse> {
+    const resp = this.appointmentsIdReschedulePatch$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<ApiResponse>): ApiResponse => r.body)
     );

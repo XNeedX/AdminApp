@@ -2,16 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import {
-  ApiContractError,
-  readApiAcknowledgment,
-  readApiEnvelope,
-} from '../../../api/api-envelope';
+import { ApiContractError, readApiAcknowledgment } from '../../../api/api-envelope';
 import { ReceptionistsService } from '../../../api/generated/profiles/services/receptionists.service';
 import { extractErrorMessage } from '../../../core/interceptors/api-error.interceptor';
-import { ReceptionistProfile, ReceptionistRow } from '../models/receptionist.model';
-import { fullName } from '../utils/receptionist-presentation';
-import { isPagedReceptionistRows } from './receptionist-contract.guards';
+import { PagedReceptionistRows, ReceptionistRow } from '../models/receptionist.model';
+import { readReceptionistPage } from './receptionist-contract.guards';
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 50;
@@ -83,19 +78,19 @@ export class ReceptionistDirectoryStore {
    * reported as an error, instead of collapsing the table into a misleading empty state.
    */
   private async fetchAll(): Promise<void> {
-    const collected: ReceptionistProfile[] = [];
+    const collected: ReceptionistRow[] = [];
     let failure: string | null = null;
     let page = 1;
     let totalCount = 0;
 
     do {
-      let result: { readonly data: readonly ReceptionistProfile[]; readonly totalCount: number };
+      let result: PagedReceptionistRows;
 
       try {
         const payload = await firstValueFrom(
           this.receptionists.receptionistsGet({ page, pageSize: PAGE_SIZE }),
         );
-        result = readApiEnvelope(payload, isPagedReceptionistRows);
+        result = readReceptionistPage(payload);
       } catch (error: unknown) {
         failure =
           error instanceof ApiContractError
@@ -114,18 +109,9 @@ export class ReceptionistDirectoryStore {
       page += 1;
     } while (collected.length < totalCount && page <= MAX_PAGES);
 
-    this.rows.set(collected.map(toRow));
+    this.rows.set(collected);
     this.loadError.set(failure);
   }
-}
-
-function toRow(profile: ReceptionistProfile): ReceptionistRow {
-  return {
-    id: profile.id,
-    fullName: fullName(profile),
-    officeAddress: profile.officeAddress,
-    photoPath: profile.photoPath,
-  };
 }
 
 /**

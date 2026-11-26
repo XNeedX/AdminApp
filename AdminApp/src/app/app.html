@@ -1,13 +1,18 @@
-@if (isAuthenticated()) {
-  <app-header
-    [email]="userEmail()"
-    [canViewProfile]="isDoctor()"
-    [navItems]="navItems()"
-    (openProfile)="onOpenProfile()"
-    (signOut)="onSignOut()"
-  />
-}
+<div [class.clinic-shell]="isAuthenticated()" [class.clinic-shell-profile]="navItems().length === 0">
+  @if (isAuthenticated()) {
+    <app-header
+      [email]="userEmail()"
+      [canViewProfile]="isDoctor()"
+      [navItems]="navItems()"
+      (openProfile)="onOpenProfile()"
+      (skipToContent)="workspace.focus()"
+      (signOut)="onSignOut()"
+    />
+  }
 
-<router-outlet />
+  <main #workspace id="clinic-main" tabindex="-1" [class.clinic-workspace]="isAuthenticated()" [class.clinic-guest]="!isAuthenticated()">
+    <router-outlet />
+  </main>
+</div>
 
 <app-toast-container [toasts]="toasts()" (dismissed)="dismissToast($event)" />

@@ -1,138 +1,134 @@
-<section class="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
-  <div class="mx-auto max-w-6xl space-y-6">
-    <div
-      class="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6"
-    >
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Services</h1>
-        <p class="mt-1 text-sm text-gray-500">
-          Manage the services offered by each specialization
-        </p>
-      </div>
-      <button
-        type="button"
-        (click)="openCreate()"
-        [disabled]="!canCreate()"
-        class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-300"
-      >
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        Add service
-      </button>
-    </div>
-
-    <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-      <label for="specialization" class="block text-sm font-medium text-gray-700">
-        Specialization
-      </label>
-      <select
-        id="specialization"
-        [value]="selectedSpecializationId()"
-        (change)="onSpecializationChange($event)"
-        [disabled]="isLoadingSpecializations() || !hasSpecializations()"
-        class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 sm:max-w-sm"
-      >
-        @if (!hasSpecializations()) {
-          <option value="">No specializations available</option>
-        }
-        @for (option of specializations(); track option.id) {
-          <option [value]="option.id">{{ option.name }}</option>
-        }
-      </select>
-      <p class="mt-2 text-sm text-gray-500">
-        Services are listed for the selected specialization.
+<section class="clinic-page" aria-labelledby="section-title">
+  <header class="clinic-page-header">
+    <div>
+      <h1 id="section-title">Services</h1>
+      <p>
+        Manage the services offered by each specialization
       </p>
     </div>
+    <button
+      type="button"
+      (click)="openCreate()"
+      [disabled]="!canCreate()"
+      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-300"
+    >
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Add service
+    </button>
+  </header>
 
-    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      @if (isLoadingSpecializations() || isLoadingServices()) {
-        <div class="flex items-center justify-center p-12" role="status" aria-live="polite">
-          <span class="text-sm text-gray-500">Loading services…</span>
-        </div>
-      } @else if (loadError(); as error) {
-        <div class="p-6" role="alert">
-          <p class="text-sm font-medium text-red-700">Could not load the specializations.</p>
-          <p class="mt-1 text-sm text-gray-600">{{ error }}</p>
-          <button
-            type="button"
-            (click)="retry()"
-            class="mt-4 inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            Try again
-          </button>
-        </div>
-      } @else if (servicesError(); as error) {
-        <div class="p-6" role="alert">
-          <p class="text-sm font-medium text-red-700">Could not load the services.</p>
-          <p class="mt-1 text-sm text-gray-600">{{ error }}</p>
-          <button
-            type="button"
-            (click)="reloadServices()"
-            class="mt-4 inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            Try again
-          </button>
-        </div>
-      } @else if (!hasSpecializations()) {
-        <p class="p-12 text-center text-sm text-gray-500">No specializations found.</p>
-      } @else {
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-            <caption class="sr-only">
-              Services of {{ selectedSpecializationName() }}
-            </caption>
-            <thead class="bg-gray-50 font-medium text-gray-600">
-              <tr>
-                <th scope="col" class="px-4 py-3 sm:px-6">Service Name</th>
-                <th scope="col" class="hidden px-4 py-3 sm:table-cell sm:px-6">Category</th>
-                <th scope="col" class="hidden px-4 py-3 sm:table-cell sm:px-6">Price</th>
-                <th scope="col" class="px-4 py-3 sm:px-6">Status</th>
-                <th scope="col" class="px-4 py-3 text-right sm:px-6">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 text-gray-700">
-              @for (row of rows(); track row.id) {
-                <tr class="transition-colors hover:bg-gray-50">
-                  <td class="px-4 py-4 font-medium text-gray-900 sm:px-6">{{ row.name }}</td>
-                  <td class="hidden px-4 py-4 text-gray-600 sm:table-cell sm:px-6">
-                    {{ row.category }}
-                  </td>
-                  <td class="hidden px-4 py-4 text-gray-600 sm:table-cell sm:px-6">
-                    {{ row.price | number: '1.2-2' }}
-                  </td>
-                  <td class="px-4 py-4 sm:px-6">
-                    <span
-                      class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
-                      [class.bg-green-100]="row.status === 'Active'"
-                      [class.text-green-700]="row.status === 'Active'"
-                      [class.bg-gray-100]="row.status === 'Inactive'"
-                      [class.text-gray-600]="row.status === 'Inactive'"
-                    >
-                      {{ row.status }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-4 text-right sm:px-6">
-                    <button
-                      type="button"
-                      (click)="openService(row.id)"
-                      class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500">
-                    No services for this specialization yet.
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+  <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+    <label for="specialization" class="block text-sm font-medium text-gray-700">
+      Specialization
+    </label>
+    <select
+      id="specialization"
+      [value]="selectedSpecializationId()"
+      (change)="onSpecializationChange($event)"
+      [disabled]="isLoadingSpecializations() || !hasSpecializations()"
+      class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 sm:max-w-sm"
+    >
+      @if (!hasSpecializations()) {
+        <option value="">No specializations available</option>
       }
-    </div>
+      @for (option of specializations(); track option.id) {
+        <option [value]="option.id">{{ option.name }}</option>
+      }
+    </select>
+    <p class="mt-2 text-sm text-gray-500">
+      Services are listed for the selected specialization.
+    </p>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    @if (isLoadingSpecializations() || isLoadingServices()) {
+      <div class="flex items-center justify-center p-12" role="status" aria-live="polite">
+        <span class="text-sm text-gray-500">Loading services…</span>
+      </div>
+    } @else if (loadError(); as error) {
+      <div class="p-6" role="alert">
+        <p class="text-sm font-medium text-red-700">Could not load the specializations.</p>
+        <p class="mt-1 text-sm text-gray-600">{{ error }}</p>
+        <button
+          type="button"
+          (click)="retry()"
+          class="mt-4 inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        >
+          Try again
+        </button>
+      </div>
+    } @else if (servicesError(); as error) {
+      <div class="p-6" role="alert">
+        <p class="text-sm font-medium text-red-700">Could not load the services.</p>
+        <p class="mt-1 text-sm text-gray-600">{{ error }}</p>
+        <button
+          type="button"
+          (click)="reloadServices()"
+          class="mt-4 inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        >
+          Try again
+        </button>
+      </div>
+    } @else if (!hasSpecializations()) {
+      <p class="p-12 text-center text-sm text-gray-500">No specializations found.</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+          <caption class="sr-only">
+            Services of {{ selectedSpecializationName() }}
+          </caption>
+          <thead class="bg-gray-50 font-medium text-gray-600">
+            <tr>
+              <th scope="col" class="px-4 py-3 sm:px-6">Service Name</th>
+              <th scope="col" class="hidden px-4 py-3 sm:table-cell sm:px-6">Category</th>
+              <th scope="col" class="hidden px-4 py-3 sm:table-cell sm:px-6">Price</th>
+              <th scope="col" class="px-4 py-3 sm:px-6">Status</th>
+              <th scope="col" class="px-4 py-3 text-right sm:px-6">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-gray-700">
+            @for (row of rows(); track row.id) {
+              <tr class="transition-colors hover:bg-gray-50">
+                <td class="px-4 py-4 font-medium text-gray-900 sm:px-6">{{ row.name }}</td>
+                <td class="hidden px-4 py-4 text-gray-600 sm:table-cell sm:px-6">
+                  {{ row.category }}
+                </td>
+                <td class="hidden px-4 py-4 text-gray-600 sm:table-cell sm:px-6">
+                  {{ row.price | number: '1.2-2' }}
+                </td>
+                <td class="px-4 py-4 sm:px-6">
+                  <span
+                    class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                    [class.bg-green-100]="row.status === 'Active'"
+                    [class.text-green-700]="row.status === 'Active'"
+                    [class.bg-gray-100]="row.status === 'Inactive'"
+                    [class.text-gray-600]="row.status === 'Inactive'"
+                  >
+                    {{ row.status }}
+                  </span>
+                </td>
+                <td class="px-4 py-4 text-right sm:px-6">
+                  <button
+                    type="button"
+                    (click)="openService(row.id)"
+                    class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500">
+                  No services for this specialization yet.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   </div>
 </section>

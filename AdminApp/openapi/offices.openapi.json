@@ -502,6 +502,19 @@
           "fullAddress": {
             "type": "string"
           },
+          "city": {
+            "type": "string"
+          },
+          "street": {
+            "type": "string"
+          },
+          "houseNumber": {
+            "type": "string"
+          },
+          "officeNumber": {
+            "type": "string",
+            "nullable": true
+          },
           "registryPhoneNumber": {
             "type": "string"
           },

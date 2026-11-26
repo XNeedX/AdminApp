@@ -6,8 +6,8 @@ import { readApiEnvelope } from '../../../api/api-envelope';
 import { Status as AppointmentsStatus } from '../../../api/generated/appointments/models/status';
 import { OfficesService } from '../../../api/generated/offices/services/offices.service';
 import { ServicesService as AppointmentsServicesService } from '../../../api/generated/appointments/services/services.service';
+import { PatientCatalogItemDto } from '../../../api/generated/profiles/models/patient-catalog-item-dto';
 import { DoctorsService as ProfilesDoctorsService } from '../../../api/generated/profiles/services/doctors.service';
-import { PatientProfileDto } from '../../../api/generated/profiles/models/patient-profile-dto';
 import { PatientsService as ProfilesPatientsService } from '../../../api/generated/profiles/services/patients.service';
 import { Status as ServicesStatus } from '../../../api/generated/services/models/status';
 import { SpecializationService } from '../../../api/generated/services/services/specialization.service';
@@ -157,17 +157,25 @@ function isSchedulingServiceList(value: unknown): value is readonly SchedulingSe
   return Array.isArray(value) && value.every(isSchedulingServiceRow);
 }
 
-/** A patient row is usable only with an id and both names; the rest is optional. */
-function isPatientRow(value: unknown): value is PatientProfileDto {
+type PatientCatalogRow = PatientCatalogItemDto & {
+  readonly id: string;
+  readonly firstName: string;
+  readonly lastName: string;
+};
+
+function isPatientRow(value: unknown): value is PatientCatalogRow {
   return (
     isRecord(value) &&
     typeof value['id'] === 'string' &&
+    value['id'].trim().length > 0 &&
     typeof value['firstName'] === 'string' &&
-    typeof value['lastName'] === 'string'
+    typeof value['lastName'] === 'string' &&
+    (value['middleName'] == null || typeof value['middleName'] === 'string') &&
+    (value['phoneNumber'] == null || typeof value['phoneNumber'] === 'string')
   );
 }
 
-function isPatientList(value: unknown): value is readonly PatientProfileDto[] {
+function isPatientList(value: unknown): value is readonly PatientCatalogRow[] {
   return Array.isArray(value) && value.every(isPatientRow);
 }
 
@@ -183,9 +191,9 @@ function normalizeAddress(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-function toPatientOption(row: PatientProfileDto): PatientOption {
+function toPatientOption(row: PatientCatalogRow): PatientOption {
   return {
-    id: row.id ?? '',
+    id: row.id,
     fullName: [row.firstName, row.lastName, row.middleName]
       .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
       .join(' '),

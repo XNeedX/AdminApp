@@ -1,4 +1,7 @@
-import { ReceptionistProfile } from '../models/receptionist.model';
+import { readApiEnvelope } from '../../../api/api-envelope';
+import { ReceptionistProfileDto } from '../../../api/generated/profiles/models/receptionist-profile-dto';
+import { PagedReceptionistRows, ReceptionistProfile } from '../models/receptionist.model';
+import { displayValue, fullName } from '../utils/receptionist-presentation';
 
 /**
  * Type guards for the generated Profiles/Appointments payloads.
@@ -68,9 +71,25 @@ export function isReceptionistProfile(value: unknown): value is ReceptionistProf
   return true;
 }
 
-/** Narrows the `data` of `GET /Receptionists`. */
-export function isPagedReceptionistRows(value: unknown): value is {
-  readonly data: readonly ReceptionistProfile[];
+type ReceptionistListEntry = ReceptionistProfileDto & {
+  readonly firstName: string | null;
+  readonly lastName: string | null;
+};
+
+function isReceptionistListEntry(value: unknown): value is ReceptionistListEntry {
+  return (
+    isRecord(value) &&
+    (value['id'] === undefined || isProfileId(value['id'])) &&
+    (value['firstName'] === null || readString(value, 'firstName') !== null) &&
+    (value['lastName'] === null || readString(value, 'lastName') !== null) &&
+    isOptionalString(value['middleName']) &&
+    isOptionalString(value['officeAddress']) &&
+    isOptionalString(value['photoPath'])
+  );
+}
+
+function isReceptionistListPage(value: unknown): value is {
+  readonly data: readonly ReceptionistListEntry[];
   readonly totalCount: number;
 } {
   if (!isRecord(value)) {
@@ -84,7 +103,27 @@ export function isPagedReceptionistRows(value: unknown): value is {
     return false;
   }
 
-  return data.every(isReceptionistProfile);
+  return data.every(isReceptionistListEntry);
+}
+
+/** ProfilesAPI can list receptionists without supplying an identifier for profile actions. */
+export function readReceptionistPage(payload: unknown): PagedReceptionistRows {
+  const page = readApiEnvelope(payload, isReceptionistListPage);
+  return {
+    totalCount: page.totalCount,
+    data: page.data.map((profile) => ({
+      id: profile.id ?? null,
+      fullName: displayValue(
+        fullName({
+          firstName: profile.firstName ?? '',
+          lastName: profile.lastName ?? '',
+          middleName: profile.middleName ?? null,
+        }),
+      ),
+      officeAddress: profile.officeAddress ?? null,
+      photoPath: profile.photoPath ?? null,
+    })),
+  };
 }
 
 /** Catalog item for the offices dropdown. */

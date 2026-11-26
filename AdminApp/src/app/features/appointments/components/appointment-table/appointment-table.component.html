@@ -12,8 +12,15 @@
 }
 
 @if (!hasGenerated()) {
-  <div class="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
-    <p class="text-sm text-gray-500">Choose filters and generate the list.</p>
+  <div class="clinic-card clinic-intro">
+    <span class="clinic-intro-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round">
+        <rect x="3" y="5" width="18" height="16" rx="3" />
+        <path d="M8 3v4m8-4v4M3 10h18m-12 5h6m-6 3h3" />
+      </svg>
+    </span>
+    <h3>No schedule generated</h3>
+    <p>Choose filters and generate the list.</p>
   </div>
 } @else {
   <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -72,11 +79,11 @@
                     </button>
                     <button
                       type="button"
-                      disabled
-                      aria-disabled="true"
+                      (click)="onReschedule(row)"
+                      [disabled]="row.isApproved || row.booking === undefined || row.isApproving || row.isDeleting"
+                      [attr.aria-disabled]="row.isApproved || row.booking === undefined || row.isApproving || row.isDeleting ? 'true' : null"
                       [attr.aria-label]="rescheduleLabel(row)"
-                      title="Reschedule is not available yet"
-                      class="inline-flex cursor-not-allowed items-center justify-center rounded-lg border border-gray-200 bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-400"
+                      class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400"
                     >
                       Reschedule
                     </button>

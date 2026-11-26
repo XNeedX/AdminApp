@@ -56,6 +56,7 @@ export interface CascadeOptions {
 export interface CascadeInput {
   readonly value: AppointmentFormValue;
   readonly catalogs: AppointmentCatalogs;
+  readonly lockedFields?: ReadonlySet<AppointmentFormField>;
   readonly lastEditedField: AppointmentFormField | null;
   /** Doctor ids with a free slot at the selected date/time, or `null` when unresolved. */
   readonly availableDoctors: ReadonlySet<string> | null;

@@ -8,12 +8,12 @@ import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
 
-export interface AppointmentsAppointmentIdResultsGet$Params {
+export interface AppointmentsAppointmentIdMyResultGet$Params {
   appointmentId: string;
 }
 
-export function appointmentsAppointmentIdResultsGet(http: HttpClient, rootUrl: string, params: AppointmentsAppointmentIdResultsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-  const rb = new RequestBuilder(rootUrl, appointmentsAppointmentIdResultsGet.PATH, 'get');
+export function appointmentsAppointmentIdMyResultGet(http: HttpClient, rootUrl: string, params: AppointmentsAppointmentIdMyResultGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  const rb = new RequestBuilder(rootUrl, appointmentsAppointmentIdMyResultGet.PATH, 'get');
   if (params) {
     rb.path('appointmentId', params.appointmentId, {});
   }
@@ -28,4 +28,4 @@ export function appointmentsAppointmentIdResultsGet(http: HttpClient, rootUrl: s
   );
 }
 
-appointmentsAppointmentIdResultsGet.PATH = '/appointments/{appointmentId}/results';
+appointmentsAppointmentIdMyResultGet.PATH = '/appointments/{appointmentId}/my-result';

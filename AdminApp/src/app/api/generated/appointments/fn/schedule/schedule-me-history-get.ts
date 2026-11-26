@@ -7,18 +7,13 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { UpdateAppointmentResultDto } from '../../models/update-appointment-result-dto';
 
-export interface AppointmentsResultsResultIdPut$Params {
-  resultId: string;
-      body?: UpdateAppointmentResultDto
+export interface ScheduleMeHistoryGet$Params {
 }
 
-export function appointmentsResultsResultIdPut(http: HttpClient, rootUrl: string, params: AppointmentsResultsResultIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-  const rb = new RequestBuilder(rootUrl, appointmentsResultsResultIdPut.PATH, 'put');
+export function scheduleMeHistoryGet(http: HttpClient, rootUrl: string, params?: ScheduleMeHistoryGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  const rb = new RequestBuilder(rootUrl, scheduleMeHistoryGet.PATH, 'get');
   if (params) {
-    rb.path('resultId', params.resultId, {});
-    rb.body(params.body, 'application/*+json');
   }
 
   return http.request(
@@ -31,4 +26,4 @@ export function appointmentsResultsResultIdPut(http: HttpClient, rootUrl: string
   );
 }
 
-appointmentsResultsResultIdPut.PATH = '/appointments/results/{resultId}';
+scheduleMeHistoryGet.PATH = '/Schedule/me/history';

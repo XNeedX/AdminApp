@@ -7,17 +7,16 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
+import { CreateAppointmentDto } from '../../models/create-appointment-dto';
 
-export interface ScheduleDoctorDoctorIdGet$Params {
-  doctorId: string;
-  date?: string;
+export interface AppointmentsMePost$Params {
+      body?: CreateAppointmentDto
 }
 
-export function scheduleDoctorDoctorIdGet(http: HttpClient, rootUrl: string, params: ScheduleDoctorDoctorIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-  const rb = new RequestBuilder(rootUrl, scheduleDoctorDoctorIdGet.PATH, 'get');
+export function appointmentsMePost(http: HttpClient, rootUrl: string, params?: AppointmentsMePost$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  const rb = new RequestBuilder(rootUrl, appointmentsMePost.PATH, 'post');
   if (params) {
-    rb.path('doctorId', params.doctorId, {});
-    rb.query('date', params.date, {});
+    rb.body(params.body, 'application/*+json');
   }
 
   return http.request(
@@ -30,4 +29,4 @@ export function scheduleDoctorDoctorIdGet(http: HttpClient, rootUrl: string, par
   );
 }
 
-scheduleDoctorDoctorIdGet.PATH = '/Schedule/doctor/{doctorId}';
+appointmentsMePost.PATH = '/Appointments/me';

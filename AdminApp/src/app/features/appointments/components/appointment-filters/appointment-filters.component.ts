@@ -62,7 +62,6 @@ export class AppointmentFiltersComponent {
   readonly generate = output<void>();
   readonly filterChange = output<AppointmentFilterState>();
   readonly dateChange = output<string>();
-  readonly createRequested = output<void>();
 
   protected readonly statusOptions = STATUS_OPTIONS;
 
@@ -131,10 +130,6 @@ export class AppointmentFiltersComponent {
 
   protected onGenerate(): void {
     this.generate.emit();
-  }
-
-  protected onCreateRequested(): void {
-    this.createRequested.emit();
   }
 
   private emitChange(next: AppointmentFilterState): void {

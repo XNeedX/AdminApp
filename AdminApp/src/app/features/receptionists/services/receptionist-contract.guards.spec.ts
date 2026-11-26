@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isPagedReceptionistRows, isReceptionistProfile } from './receptionist-contract.guards';
+import { isReceptionistProfile, readReceptionistPage } from './receptionist-contract.guards';
 
 function profile(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -43,23 +43,37 @@ describe('isReceptionistProfile', () => {
   });
 });
 
-describe('isPagedReceptionistRows', () => {
-  it('accepts a page whose rows have a null office address', () => {
+describe('readReceptionistPage', () => {
+  it('reads the nested page with or without receptionist IDs', () => {
+    const withoutId = profile({ middleName: 'Byron', officeAddress: null, lastName: null });
+    delete withoutId['id'];
+
     expect(
-      isPagedReceptionistRows({
-        data: [profile({ officeAddress: null }), profile({ id: 'r-2' })],
-        totalCount: 2,
-      })
-    ).toBe(true);
+      readReceptionistPage({
+        isSuccess: true,
+        data: {
+          data: [withoutId, profile({ id: 'r-2' })],
+          totalCount: 2,
+        },
+      }),
+    ).toEqual({
+      data: [
+        { id: null, fullName: 'Ada Byron', officeAddress: null, photoPath: null },
+        { id: 'r-2', fullName: 'Ada Lovelace', officeAddress: '1 Main St', photoPath: null },
+      ],
+      totalCount: 2,
+    });
   });
 
   it('rejects a page with a non-numeric total count', () => {
-    expect(isPagedReceptionistRows({ data: [profile()], totalCount: '2' })).toBe(false);
+    expect(() => readReceptionistPage({ data: { data: [profile()], totalCount: '2' } })).toThrow(
+      'The API returned an unexpected payload shape.',
+    );
   });
 
   it('rejects a page containing one invalid row', () => {
-    expect(
-      isPagedReceptionistRows({ data: [profile(), profile({ firstName: '' })], totalCount: 2 })
-    ).toBe(false);
+    expect(() =>
+      readReceptionistPage({ data: { data: [profile(), profile({ firstName: '' })], totalCount: 2 } }),
+    ).toThrow('The API returned an unexpected payload shape.');
   });
 });

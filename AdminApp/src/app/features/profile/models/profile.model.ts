@@ -71,7 +71,7 @@ export function applyProfileChanges(
   };
 }
 
-function findOptionByLabel(
+export function findOptionByLabel(
   options: readonly AutocompleteOption[],
   label: string
 ): AutocompleteOption | undefined {

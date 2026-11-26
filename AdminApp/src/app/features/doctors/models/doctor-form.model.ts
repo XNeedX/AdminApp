@@ -71,3 +71,14 @@ export const INVALID_SPECIALIZATION_MESSAGE = 'Invalid specialization name';
 
 /** Default status for a doctor that is being created. */
 export const DEFAULT_DOCTOR_STATUS: DoctorStatus = DoctorStatus.AtWork;
+
+const clinicDateFormatter = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Europe/Moscow',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+export function currentDoctorProfileDate(): string {
+  return clinicDateFormatter.format(new Date());
+}

@@ -14,14 +14,23 @@ import { ApiResponse } from '../models/api-response';
 import { ApiResponseOfDoctorDetailsDto } from '../models/api-response-of-doctor-details-dto';
 import { ApiResponseOfGuid } from '../models/api-response-of-guid';
 import { ApiResponseOfPagedResultOfDoctorTableRowDto } from '../models/api-response-of-paged-result-of-doctor-table-row-dto';
+import { DoctorAdminDtoApiResponse } from '../models/doctor-admin-dto-api-response';
 import { doctorsDoctorsGet } from '../fn/doctors/doctors-doctors-get';
 import { DoctorsDoctorsGet$Params } from '../fn/doctors/doctors-doctors-get';
 import { doctorsGet } from '../fn/doctors/doctors-get';
 import { DoctorsGet$Params } from '../fn/doctors/doctors-get';
 import { doctorsIdGet } from '../fn/doctors/doctors-id-get';
 import { DoctorsIdGet$Params } from '../fn/doctors/doctors-id-get';
+import { doctorsIdProfileGet$Json } from '../fn/doctors/doctors-id-profile-get-json';
+import { DoctorsIdProfileGet$Json$Params } from '../fn/doctors/doctors-id-profile-get-json';
+import { doctorsIdProfileGet$Plain } from '../fn/doctors/doctors-id-profile-get-plain';
+import { DoctorsIdProfileGet$Plain$Params } from '../fn/doctors/doctors-id-profile-get-plain';
 import { doctorsIdPut } from '../fn/doctors/doctors-id-put';
 import { DoctorsIdPut$Params } from '../fn/doctors/doctors-id-put';
+import { doctorsMeGet$Json } from '../fn/doctors/doctors-me-get-json';
+import { DoctorsMeGet$Json$Params } from '../fn/doctors/doctors-me-get-json';
+import { doctorsMeGet$Plain } from '../fn/doctors/doctors-me-get-plain';
+import { DoctorsMeGet$Plain$Params } from '../fn/doctors/doctors-me-get-plain';
 import { doctorsPost } from '../fn/doctors/doctors-post';
 import { DoctorsPost$Params } from '../fn/doctors/doctors-post';
 
@@ -163,6 +172,108 @@ export class DoctorsService extends BaseService {
     const resp = this.doctorsDoctorsGet$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<ApiResponseOfPagedResultOfDoctorTableRowDto>): ApiResponseOfPagedResultOfDoctorTableRowDto => r.body)
+    );
+  }
+
+  /** Path part for operation `doctorsIdProfileGet()` */
+  static readonly DoctorsIdProfileGetPath = '/Doctors/{id}/profile';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `doctorsIdProfileGet$Plain()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  doctorsIdProfileGet$Plain$Response(params: DoctorsIdProfileGet$Plain$Params, context?: HttpContext): Observable<StrictHttpResponse<DoctorAdminDtoApiResponse>> {
+    const obs = doctorsIdProfileGet$Plain(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `doctorsIdProfileGet$Plain$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  doctorsIdProfileGet$Plain(params: DoctorsIdProfileGet$Plain$Params, context?: HttpContext): Observable<DoctorAdminDtoApiResponse> {
+    const resp = this.doctorsIdProfileGet$Plain$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<DoctorAdminDtoApiResponse>): DoctorAdminDtoApiResponse => r.body)
+    );
+  }
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `doctorsIdProfileGet$Json()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  doctorsIdProfileGet$Json$Response(params: DoctorsIdProfileGet$Json$Params, context?: HttpContext): Observable<StrictHttpResponse<DoctorAdminDtoApiResponse>> {
+    const obs = doctorsIdProfileGet$Json(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `doctorsIdProfileGet$Json$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  doctorsIdProfileGet$Json(params: DoctorsIdProfileGet$Json$Params, context?: HttpContext): Observable<DoctorAdminDtoApiResponse> {
+    const resp = this.doctorsIdProfileGet$Json$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<DoctorAdminDtoApiResponse>): DoctorAdminDtoApiResponse => r.body)
+    );
+  }
+
+  /** Path part for operation `doctorsMeGet()` */
+  static readonly DoctorsMeGetPath = '/Doctors/me';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `doctorsMeGet$Plain()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  doctorsMeGet$Plain$Response(params?: DoctorsMeGet$Plain$Params, context?: HttpContext): Observable<StrictHttpResponse<DoctorAdminDtoApiResponse>> {
+    const obs = doctorsMeGet$Plain(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `doctorsMeGet$Plain$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  doctorsMeGet$Plain(params?: DoctorsMeGet$Plain$Params, context?: HttpContext): Observable<DoctorAdminDtoApiResponse> {
+    const resp = this.doctorsMeGet$Plain$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<DoctorAdminDtoApiResponse>): DoctorAdminDtoApiResponse => r.body)
+    );
+  }
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `doctorsMeGet$Json()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  doctorsMeGet$Json$Response(params?: DoctorsMeGet$Json$Params, context?: HttpContext): Observable<StrictHttpResponse<DoctorAdminDtoApiResponse>> {
+    const obs = doctorsMeGet$Json(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `doctorsMeGet$Json$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  doctorsMeGet$Json(params?: DoctorsMeGet$Json$Params, context?: HttpContext): Observable<DoctorAdminDtoApiResponse> {
+    const resp = this.doctorsMeGet$Json$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<DoctorAdminDtoApiResponse>): DoctorAdminDtoApiResponse => r.body)
     );
   }
 

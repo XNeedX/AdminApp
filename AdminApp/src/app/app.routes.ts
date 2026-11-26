@@ -59,6 +59,28 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'offices',
+        canActivate: [roleGuard('Receptionist')],
+        loadComponent: () =>
+          import('./features/offices/pages/offices-page.component').then((m) => m.OfficesPageComponent),
+      },
+      {
+        path: 'offices/new',
+        canActivate: [roleGuard('Receptionist')],
+        loadComponent: () =>
+          import('./features/offices/pages/office-information.component').then(
+            (m) => m.OfficeInformationComponent,
+          ),
+      },
+      {
+        path: 'offices/:id',
+        canActivate: [roleGuard('Receptionist')],
+        loadComponent: () =>
+          import('./features/offices/pages/office-information.component').then(
+            (m) => m.OfficeInformationComponent,
+          ),
+      },
+      {
         path: 'services',
         canActivate: [roleGuard('Receptionist')],
         loadComponent: () =>
@@ -89,6 +111,27 @@ export const routes: Routes = [
           import(
             './features/specializations/pages/specialization-info/specialization-info.component'
           ).then((m) => m.SpecializationInfoComponent),
+      },
+      {
+        path: 'my-schedule',
+        canActivate: [roleGuard('Doctor')],
+        data: { portalPage: 'schedule' },
+        loadComponent: () =>
+          import('./features/doctor-portal/doctor-portal.page').then((m) => m.DoctorPortalPage),
+      },
+      {
+        path: 'doctor-patients/:id',
+        canActivate: [roleGuard('Doctor')],
+        data: { portalPage: 'patient' },
+        loadComponent: () =>
+          import('./features/doctor-portal/doctor-portal.page').then((m) => m.DoctorPortalPage),
+      },
+      {
+        path: 'appointment-results/:id',
+        canActivate: [roleGuard('Doctor')],
+        data: { portalPage: 'result' },
+        loadComponent: () =>
+          import('./features/doctor-portal/doctor-portal.page').then((m) => m.DoctorPortalPage),
       },
       {
         path: 'profile',

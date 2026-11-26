@@ -2,15 +2,11 @@
 /**
  * TEMPORARY OpenAPI augmentation bridge (specs/006-appointment-management, task T005).
  *
- * The live Profiles API Swagger documents every action as an untyped `IActionResult`
- * (no response schema), so the read models used by the appointment doctor catalog and
- * the patient lookup cannot be generated. This overlay adds the response schemas that
- * match the backend DTOs and normalizes query parameter names.
+ * This overlay adds response schemas for untyped Profiles API actions and normalizes
+ * query parameter names.
  *
- * Patient search (`GET /api/Patients?search=…`) does not exist in the backend yet
- * (gate P-2); this script intentionally does not invent it. The backend does expose
- * `GET /api/Patients` (roles Doctor/Receptionist, no query parameters), which is
- * documented here as the receptionist patient collection; search is applied client-side.
+ * The typed `GET /api/Patients` response comes directly from Swagger. The receptionist
+ * form filters the list client-side.
  *
  * Usage: node scripts/augment-profiles-openapi.mjs [sourceUrlOrFile]
  */
@@ -81,17 +77,17 @@ function ensureSchemas(definition) {
   schemas.ApiResponse = envelopeSchema(null);
   schemas.ApiResponseOfGuid = envelopeSchema({ type: 'string', format: 'uuid' });
 
-  // Receptionist profile read model. `id` is required for row identity, profile
-  // navigation, and deletion; the backend DTO must expose it (gate CG-1).
+  // The current Profiles API omits the id. Deployments that supply it support row actions.
   schemas.ReceptionistProfileDTO ??= {
     type: 'object',
     properties: {
       id: { type: 'string', format: 'uuid' },
       photoPath: { type: 'string', nullable: true },
-      firstName: { type: 'string' },
-      lastName: { type: 'string' },
+      firstName: { type: 'string', nullable: true },
+      lastName: { type: 'string', nullable: true },
       middleName: { type: 'string', nullable: true },
-      officeAddress: { type: 'string' },
+      officeAddress: { type: 'string', nullable: true },
+      status: { type: 'string', enum: ['Active', 'Inactive'] },
     },
     additionalProperties: false,
   };
@@ -141,12 +137,10 @@ function ensureSchemas(definition) {
     additionalProperties: false,
   };
 
-  // Patient read model. `id` is required for selection and profile navigation and is
-  // present on the backend `PatientProfileDto` (PatientMapper maps `PatientProfile.Id`).
+  // Patient detail model. Unlike the typed catalog, this DTO has no patient id.
   schemas.PatientProfileDTO ??= {
     type: 'object',
     properties: {
-      id: { type: 'string', format: 'uuid' },
       photoPath: { type: 'string', nullable: true },
       firstName: { type: 'string' },
       lastName: { type: 'string' },
@@ -162,12 +156,6 @@ function ensureSchemas(definition) {
   });
   schemas.ApiResponseOfPatientProfileDTO = envelopeSchema({
     $ref: '#/components/schemas/PatientProfileDTO',
-  });
-  // Collection read model for the receptionist patient picker. The backend returns
-  // `Result<IEnumerable<PatientProfileDto>>` with no paging or search parameters.
-  schemas.ApiResponseOfIEnumerableOfPatientProfileDTO = envelopeSchema({
-    type: 'array',
-    items: { $ref: '#/components/schemas/PatientProfileDTO' },
   });
 
   // Full doctor profile used by the edit form. The backend `DoctorDetailsDto`
@@ -207,16 +195,6 @@ function rewriteResponses(definition) {
   if (patientByIdPath?.get !== undefined) {
     patientByIdPath.get.responses = {
       200: jsonBody('#/components/schemas/ApiResponseOfPatientProfileDTO'),
-      ...failureResponses(),
-    };
-  }
-
-  // Receptionist patient lookup (`GET /api/Patients`, roles Doctor/Receptionist).
-  // Search is applied client-side: the backend action takes no query parameters.
-  const patientCollectionPath = paths['/api/Patients'];
-  if (patientCollectionPath?.get !== undefined) {
-    patientCollectionPath.get.responses = {
-      200: jsonBody('#/components/schemas/ApiResponseOfIEnumerableOfPatientProfileDTO'),
       ...failureResponses(),
     };
   }

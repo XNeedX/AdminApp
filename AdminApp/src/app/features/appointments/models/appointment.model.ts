@@ -17,7 +17,13 @@ export interface AppointmentRow {
   readonly patientPhoneNumber: string;
   readonly serviceName: string;
   readonly isApproved: boolean;
-  /** Filled from the filter context when known; never rendered. */
+  readonly booking?: {
+    readonly patientId: string;
+    readonly doctorId: string;
+    readonly serviceId: string;
+    readonly officeId: string;
+    readonly date: string;
+  };
   readonly officeId: string | null;
   readonly isApproving: boolean;
   readonly isDeleting: boolean;

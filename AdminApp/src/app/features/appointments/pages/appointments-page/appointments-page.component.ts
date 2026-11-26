@@ -51,6 +51,7 @@ export class AppointmentsPageComponent implements OnInit {
   protected readonly catalogs = signal<AppointmentCatalogs>(EMPTY_APPOINTMENT_CATALOGS);
   protected readonly isLoadingCatalogs = signal<boolean>(true);
   protected readonly catalogError = signal<string | null>(null);
+  protected readonly rescheduling = signal<AppointmentRow | null>(null);
   protected readonly isCreateOpen = signal<boolean>(false);
 
   protected readonly rows = this.facade.rows;
@@ -90,6 +91,15 @@ export class AppointmentsPageComponent implements OnInit {
     this.isCreateOpen.set(true);
   }
 
+  protected onRescheduleRequested(row: AppointmentRow): void {
+    if (row.isApproved || row.booking === undefined || row.isApproving || row.isDeleting) {
+      return;
+    }
+
+    this.rescheduling.set(row);
+    this.isCreateOpen.set(true);
+  }
+
   protected onAppointmentCreated(): void {
     if (this.filters().hasGenerated) {
       this.load();
@@ -98,6 +108,7 @@ export class AppointmentsPageComponent implements OnInit {
 
   protected onModalClosed(): void {
     this.isCreateOpen.set(false);
+    this.rescheduling.set(null);
   }
 
   protected onApprove(row: AppointmentRow): void {

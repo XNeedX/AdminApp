@@ -1,5 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, output,
+} from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { merge } from 'rxjs';
 
 import { AutocompleteComponent } from '../../../../shared/components/autocomplete/autocomplete.component';
 import { AutocompleteOption } from '../../../../shared/components/autocomplete/autocomplete.model';
@@ -8,6 +11,7 @@ import {
   DoctorFormGroup,
   DoctorFormMode,
   DoctorStatus,
+  currentDoctorProfileDate,
 } from '../../models/doctor-form.model';
 
 /**
@@ -24,6 +28,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DoctorFormComponent {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   readonly mode = input.required<DoctorFormMode>();
   readonly form = input.required<FormGroup<DoctorFormGroup>>();
   readonly specializations = input<readonly AutocompleteOption[]>([]);
@@ -33,12 +38,12 @@ export class DoctorFormComponent {
   readonly formError = input<string | null>(null);
   readonly isSubmitting = input<boolean>(false);
   readonly canSubmit = input<boolean>(false);
-  /** Photo upload is deferred until the Documents operation is generated (P-6). */
   readonly showPhoto = input<boolean>(false);
 
   readonly submitted = output<void>();
   readonly cancelled = output<void>();
   readonly photoSelected = output<File>();
+  readonly photoRemoved = output<void>();
   readonly specializationSelected = output<AutocompleteOption>();
   readonly officeSelected = output<AutocompleteOption>();
 
@@ -52,7 +57,24 @@ export class DoctorFormComponent {
     this.mode() === 'create' ? 'Confirm' : 'Save changes'
   );
 
-  protected readonly isEmailReadonly = computed<boolean>(() => this.mode() === 'edit');
+  protected readonly currentDate = currentDoctorProfileDate();
+  protected readonly currentYear = Number(this.currentDate.slice(0, 4));
+  protected readonly careerYears = Array.from({ length: 100 }, (_, index) => this.currentYear - index);
+
+  constructor() {
+    effect((onCleanup) => {
+      const controls = Object.values(this.form().controls);
+      // Blur updates touched state without changing the form status.
+      const events = merge(...controls.map((control) => control.events))
+        .subscribe(() => this.changeDetector.markForCheck());
+      onCleanup(() => events.unsubscribe());
+    });
+  }
+
+  protected onPhotoRemoved(input: HTMLInputElement): void {
+    input.value = '';
+    this.photoRemoved.emit();
+  }
 
   protected onSubmit(): void {
     if (this.isSubmitting()) {
@@ -137,6 +159,10 @@ export class DoctorFormComponent {
       }
     }
 
+    if (field.errors['maxlength'] && (control === 'firstName' || control === 'lastName')) {
+      return 'Enter no more than 100 characters';
+    }
+
     if (control === 'email') {
       if (field.errors['email'] === true) {
         return "You've entered an invalid email";
@@ -147,8 +173,9 @@ export class DoctorFormComponent {
       }
     }
 
-    if (control === 'dateOfBirth' && field.errors['futureDate'] !== undefined) {
-      return 'Date of birth cannot be in the future';
+    if (control === 'dateOfBirth') {
+      if (field.errors['pattern']) return 'Please, select a valid date';
+      if (field.errors['futureDate']) return 'Date of birth cannot be in the future';
     }
 
     return null;
@@ -179,7 +206,9 @@ export class DoctorFormComponent {
       return null;
     }
 
-    return field.errors['required'] === true ? 'Please, choose the office' : null;
+    return field.errors['required'] === true
+      ? 'Please, choose the office'
+      : 'Invalid office address';
   }
 
   protected yearError(): string | null {
@@ -192,6 +221,8 @@ export class DoctorFormComponent {
     if (field.errors['required'] === true) {
       return 'Please, select the year';
     }
+
+    if (field.errors['min'] || field.errors['pattern']) return 'Please, select a valid year';
 
     if (field.errors['futureYear'] !== undefined) {
       return 'Career start year cannot be in the future';

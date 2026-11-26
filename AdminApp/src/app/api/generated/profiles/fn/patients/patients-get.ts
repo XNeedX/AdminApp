@@ -7,12 +7,12 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { ApiResponseOfIEnumerableOfPatientProfileDto } from '../../models/api-response-of-i-enumerable-of-patient-profile-dto';
+import { PatientCatalogItemDtoIReadOnlyListApiResponse } from '../../models/patient-catalog-item-dto-i-read-only-list-api-response';
 
 export interface PatientsGet$Params {
 }
 
-export function patientsGet(http: HttpClient, rootUrl: string, params?: PatientsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ApiResponseOfIEnumerableOfPatientProfileDto>> {
+export function patientsGet(http: HttpClient, rootUrl: string, params?: PatientsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PatientCatalogItemDtoIReadOnlyListApiResponse>> {
   const rb = new RequestBuilder(rootUrl, patientsGet.PATH, 'get');
   if (params) {
   }
@@ -22,7 +22,7 @@ export function patientsGet(http: HttpClient, rootUrl: string, params?: Patients
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<ApiResponseOfIEnumerableOfPatientProfileDto>;
+      return r as StrictHttpResponse<PatientCatalogItemDtoIReadOnlyListApiResponse>;
     })
   );
 }

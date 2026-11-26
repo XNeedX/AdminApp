@@ -41,10 +41,13 @@ export class App {
           { label: 'Appointments', path: '/appointments' },
           { label: 'Doctors', path: '/doctors' },
           { label: 'Receptionists', path: '/receptionists' },
+          { label: 'Offices', path: '/offices' },
           { label: 'Services', path: '/services' },
           { label: 'Specializations', path: '/specializations' },
         ]
-      : [];
+      : roles.includes('Doctor')
+        ? [{ label: 'My schedule', path: '/my-schedule' }]
+        : [];
   });
   readonly toasts = this.notifications.toasts;
 

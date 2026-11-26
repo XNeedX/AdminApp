@@ -176,10 +176,10 @@ describe('DoctorFormComponent', () => {
     expect(form.controls.firstName.hasError('required')).toBe(true);
   });
 
-  it('renders the email read-only and the Save changes action in edit mode', () => {
+  it('renders the Save changes action and hides the create-only email field in edit mode', () => {
     render('edit');
 
-    expect((fixture.nativeElement as HTMLElement).querySelector('#email')?.getAttribute('readonly')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#email')).toBeNull();
     expect(button('Save changes')).not.toBeNull();
     expect(text()).toContain('Edit profile');
   });

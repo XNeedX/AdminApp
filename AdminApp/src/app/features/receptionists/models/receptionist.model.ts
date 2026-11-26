@@ -13,16 +13,16 @@ export interface ReceptionistProfile {
 
 /** A validated row of the Receptionists table. */
 export interface ReceptionistRow {
-  readonly id: string;
+  readonly id: string | null;
   readonly fullName: string;
   /** `null` when the receptionist has no office; rendered as "Not assigned". */
   readonly officeAddress: string | null;
   readonly photoPath: string | null;
 }
 
-/** One page of the backend receptionist list. */
+/** One page of validated directory rows. */
 export interface PagedReceptionistRows {
-  readonly data: readonly ReceptionistProfile[];
+  readonly data: readonly ReceptionistRow[];
   readonly totalCount: number;
 }
 

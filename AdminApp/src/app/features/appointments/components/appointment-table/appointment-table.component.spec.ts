@@ -91,16 +91,21 @@ describe('AppointmentTableComponent', () => {
     expect(cancel?.disabled).toBe(false);
   });
 
-  it('keeps Reschedule disabled with a tooltip', () => {
-    render({ rows: [makeRow({ id: 'appt-1' })] });
-
-    const reschedule = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      'button[title="Reschedule is not available yet"]'
+  it('emits Reschedule for a pending row and disables it for an approved row', () => {
+    const booking = { date: '2026-11-20', patientId: 'p', doctorId: 'd', serviceId: 's', officeId: 'o' };
+    const pending = makeRow({ id: 'appt-1', booking });
+    const approved = makeRow({ id: 'appt-2', booking, isApproved: true });
+    render({ rows: [pending, approved] });
+    const reschedule = buttons(fixture).filter((button) =>
+      button.getAttribute('aria-label')?.startsWith('Reschedule appointment')
     );
+    const requested = vi.fn();
+    fixture.componentInstance.rescheduleRequested.subscribe(requested);
 
-    expect(reschedule).not.toBeNull();
-    expect(reschedule?.disabled).toBe(true);
-    expect(reschedule?.getAttribute('aria-disabled')).toBe('true');
+    expect(reschedule.map((button) => button.disabled)).toEqual([false, true]);
+    reschedule[0]?.click();
+    reschedule[1]?.click();
+    expect(requested).toHaveBeenCalledExactlyOnceWith(pending);
   });
 
   it('highlights approved rows and disables their Approve button', () => {

@@ -45,12 +45,14 @@ export class AppointmentAvailabilityService {
   private readonly slotsCache = new Map<string, CacheEntry<readonly string[]>>();
 
   /** Free slots for one doctor/service/date, cached for 30 seconds. */
-  getSlots(doctorId: string, serviceId: string, date: string): Observable<readonly string[]> {
+  getSlots(
+    doctorId: string, serviceId: string, date: string, excludeAppointmentId?: string
+  ): Observable<readonly string[]> {
     if (doctorId.length === 0 || serviceId.length === 0 || date.length === 0) {
       return of<readonly string[]>([]);
     }
 
-    const key = this.slotsKey(doctorId, serviceId, date);
+    const key = this.slotsKey(doctorId, serviceId, date, excludeAppointmentId);
     const cached = this.slotsCache.get(key);
 
     if (cached !== undefined && cached.expiresAt > Date.now()) {
@@ -58,7 +60,7 @@ export class AppointmentAvailabilityService {
     }
 
     return this.schedule
-      .scheduleAvailableTimeSlotsGet({ doctorId, serviceId, date })
+      .scheduleAvailableTimeSlotsGet({ doctorId, serviceId, date, ...(excludeAppointmentId ? { excludeAppointmentId } : {}) })
       .pipe(
         map((payload) => readApiEnvelope(payload, isStringArray)),
         tap((slots) => {
@@ -80,7 +82,8 @@ export class AppointmentAvailabilityService {
   getSlotsForCandidates(
     doctorIds: readonly string[],
     serviceId: string,
-    date: string
+    date: string,
+    excludeAppointmentId?: string
   ): Observable<readonly string[]> {
     if (doctorIds.length === 0) {
       return of<readonly string[]>([]);
@@ -88,7 +91,7 @@ export class AppointmentAvailabilityService {
 
     return forkJoin(
       doctorIds.map((doctorId) =>
-        this.getSlots(doctorId, serviceId, date).pipe(
+        this.getSlots(doctorId, serviceId, date, excludeAppointmentId).pipe(
           map((slots): SlotProbeResult => ({ ok: true, slots })),
           catchError(() => of<SlotProbeResult>({ ok: false, slots: [] }))
         )
@@ -125,7 +128,8 @@ export class AppointmentAvailabilityService {
     doctorIds: readonly string[],
     serviceId: string,
     date: string,
-    slot: string
+    slot: string,
+    excludeAppointmentId?: string
   ): Observable<ReadonlySet<string>> {
     if (doctorIds.length === 0 || serviceId.length === 0 || date.length === 0 || slot.length === 0) {
       return of<ReadonlySet<string>>(new Set<string>());
@@ -133,7 +137,7 @@ export class AppointmentAvailabilityService {
 
     return forkJoin(
       doctorIds.map((doctorId) =>
-        this.getSlots(doctorId, serviceId, date).pipe(
+        this.getSlots(doctorId, serviceId, date, excludeAppointmentId).pipe(
           map((slots) => ({ doctorId, hasSlot: slots.includes(slot) })),
           catchError(() => of({ doctorId, hasSlot: false }))
         )
@@ -153,12 +157,38 @@ export class AppointmentAvailabilityService {
     );
   }
 
+  getAvailableDates(
+    doctorIds: readonly string[],
+    serviceId: string,
+    startDate: string,
+    endDate: string,
+    excludeAppointmentId?: string
+  ): Observable<ReadonlySet<string>> {
+    if (doctorIds.length === 0) return of(new Set<string>());
+
+    return forkJoin(doctorIds.map((doctorId) =>
+      this.schedule.scheduleAvailableDatesGet({
+        doctorId, serviceId, startDate, endDate, excludeAppointmentId,
+      }).pipe(
+        map((payload) => readApiEnvelope(payload, isStringArray)),
+        catchError(() => of(null))
+      )
+    )).pipe(
+      map((results) => {
+        if (results.every((dates) => dates === null)) {
+          throw new Error('Could not load available dates.');
+        }
+        return new Set(results.flatMap((dates) => dates ?? []));
+      })
+    );
+  }
+
   /** Drops every cached slot result (used after a rejected booking). */
   invalidate(): void {
     this.slotsCache.clear();
   }
 
-  private slotsKey(doctorId: string, serviceId: string, date: string): string {
-    return `${doctorId}|${serviceId}|${date}`;
+  private slotsKey(doctorId: string, serviceId: string, date: string, excludeAppointmentId?: string): string {
+    return `${doctorId}|${serviceId}|${date}|${excludeAppointmentId ?? ''}`;
   }
 }

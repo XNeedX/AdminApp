@@ -47,6 +47,7 @@
               Photo (optional)
             </label>
             <input
+              #photoInput
               id="photo-upload"
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -55,6 +56,13 @@
               [attr.aria-describedby]="photoError() !== null ? 'photo-upload-error' : null"
               class="mt-1 block w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
             />
+            @if (mode() === 'edit' && (photoPreview() || photoError())) {
+              <button
+                type="button"
+                (click)="onPhotoRemoved(photoInput)"
+                class="mt-2 text-sm font-medium text-blue-700 hover:underline"
+              >Remove photo</button>
+            }
             @if (photoError(); as error) {
               <p id="photo-upload-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
             }
@@ -71,6 +79,7 @@
             id="first-name"
             type="text"
             formControlName="firstName"
+            maxlength="100"
             placeholder="John"
             autocomplete="given-name"
             required
@@ -92,6 +101,7 @@
             id="last-name"
             type="text"
             formControlName="lastName"
+            maxlength="100"
             placeholder="Doe"
             autocomplete="family-name"
             required
@@ -113,6 +123,7 @@
             id="middle-name"
             type="text"
             formControlName="middleName"
+            maxlength="100"
             placeholder="Middle"
             autocomplete="additional-name"
             class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -129,6 +140,7 @@
             id="dob"
             type="date"
             formControlName="dateOfBirth"
+            [max]="currentDate"
             required
             [attr.aria-invalid]="isInvalid('dateOfBirth')"
             [attr.aria-describedby]="isInvalid('dateOfBirth') ? 'dob-error' : null"
@@ -140,30 +152,28 @@
           }
         </div>
 
-        <div>
-          <label for="email" class="block text-sm font-medium text-gray-700">
-            E-mail <span class="text-red-500" aria-hidden="true">*</span>
-          </label>
-          <input
-            id="email"
-            type="email"
-            formControlName="email"
-            placeholder="doctor@hospital.org"
-            autocomplete="email"
-            [required]="mode() === 'create'"
-            [readOnly]="isEmailReadonly()"
-            [attr.aria-invalid]="isInvalid('email')"
-            [attr.aria-describedby]="isInvalid('email') ? 'email-error' : null"
-            [class.border-red-500]="isInvalid('email')"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 read-only:bg-gray-100"
-          />
-          @if (fieldError('email'); as error) {
-            <p id="email-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
-          }
-          @if (isEmailReadonly()) {
-            <p class="mt-1 text-xs text-gray-500">The email cannot be changed.</p>
-          }
-        </div>
+        @if (mode() === 'create') {
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">
+              E-mail <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="doctor@hospital.org"
+              autocomplete="email"
+              required
+              [attr.aria-invalid]="isInvalid('email')"
+              [attr.aria-describedby]="isInvalid('email') ? 'email-error' : null"
+              [class.border-red-500]="isInvalid('email')"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 read-only:bg-gray-100"
+            />
+            @if (fieldError('email'); as error) {
+              <p id="email-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+            }
+          </div>
+        }
       </div>
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -190,21 +200,34 @@
           <label for="office" class="block text-sm font-medium text-gray-700">
             Office <span class="text-red-500" aria-hidden="true">*</span>
           </label>
-          <select
-            id="office"
-            formControlName="officeText"
-            required
-            (change)="onOfficeChange($event)"
-            [attr.aria-invalid]="isOfficeInvalid()"
-            [attr.aria-describedby]="isOfficeInvalid() ? 'office-error' : null"
-            [class.border-red-500]="isOfficeInvalid()"
-            class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">Select an office</option>
-            @for (office of offices(); track office.id) {
-              <option [value]="office.label">{{ office.label }}</option>
-            }
-          </select>
+          @if (mode() === 'edit') {
+            <app-autocomplete
+              inputId="office"
+              placeholder="Type to filter..."
+              [options]="offices()"
+              [invalid]="isOfficeInvalid()"
+              [required]="true"
+              [describedBy]="officeError() !== null ? 'office-error' : null"
+              formControlName="officeText"
+              (optionSelected)="officeSelected.emit($event)"
+            />
+          } @else {
+            <select
+              id="office"
+              formControlName="officeText"
+              required
+              (change)="onOfficeChange($event)"
+              [attr.aria-invalid]="isOfficeInvalid()"
+              [attr.aria-describedby]="isOfficeInvalid() ? 'office-error' : null"
+              [class.border-red-500]="isOfficeInvalid()"
+              class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">Select an office</option>
+              @for (office of offices(); track office.id) {
+                <option [value]="office.label">{{ office.label }}</option>
+              }
+            </select>
+          }
           @if (officeError(); as error) {
             <p id="office-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
           }
@@ -220,6 +243,10 @@
             id="career-year"
             type="number"
             formControlName="careerStartYear"
+            min="1"
+            step="1"
+            [max]="currentYear"
+            [attr.list]="mode() === 'edit' ? 'doctor-career-years' : null"
             placeholder="e.g. 2010"
             required
             [attr.aria-invalid]="isYearInvalid()"
@@ -227,6 +254,13 @@
             [class.border-red-500]="isYearInvalid()"
             class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
+          @if (mode() === 'edit') {
+            <datalist id="doctor-career-years">
+              @for (year of careerYears; track year) {
+                <option [value]="year"></option>
+              }
+            </datalist>
+          }
           @if (yearError(); as error) {
             <p id="career-year-error" class="mt-1 text-xs text-red-600">{{ error }}</p>
           }

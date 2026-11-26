@@ -78,6 +78,19 @@ describe('ReceptionistTableComponent', () => {
     expect(requested).toEqual(['r1']);
   });
 
+  it('renders entries without an ID and exposes actions only for entries with an ID', () => {
+    const requested: string[] = [];
+    fixture.componentInstance.profileRequested.subscribe((id) => requested.push(id));
+    render({ rows: [{ ...ROWS[0], id: null }, ROWS[1]] });
+
+    const firstRow = root().querySelector<HTMLTableRowElement>('tbody tr');
+    expect(firstRow?.textContent).toContain('Anna Smith');
+    expect(firstRow?.querySelector('button')).toBeNull();
+    expect(deleteButtons()).toHaveLength(1);
+    firstRow?.click();
+    expect(requested).toEqual([]);
+  });
+
   it('emits profileRequested when the profile icon is activated', () => {
     const requested: string[] = [];
     fixture.componentInstance.profileRequested.subscribe((id) => requested.push(id));

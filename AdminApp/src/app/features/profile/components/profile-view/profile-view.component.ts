@@ -20,6 +20,8 @@ import { DoctorProfile } from '../../models/profile.model';
 export class ProfileViewComponent {
   readonly profile = input<DoctorProfile | null>(null);
 
+  readonly photoUrl = input<string | null>(null);
+
   readonly edit = output<void>();
 
   protected readonly initials = computed<string>(() => {

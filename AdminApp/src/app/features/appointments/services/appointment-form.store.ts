@@ -21,6 +21,8 @@ import {
   CascadePlan,
   CascadeWrite,
 } from '../models/appointment-form.model';
+import { AppointmentRow } from '../models/appointment.model';
+import { toTimeLabel } from '../utils/appointment-date';
 import { reduceAppointmentCascade } from './appointment-cascade';
 
 /**
@@ -80,6 +82,9 @@ export class AppointmentFormStore {
 
   private readonly touchedFields = signal<ReadonlySet<AppointmentFormField>>(new Set());
 
+  private readonly lockedFields = signal<ReadonlySet<AppointmentFormField>>(new Set());
+  private readonly doctorText = signal('');
+
   readonly catalogs = signal<AppointmentCatalogs>(EMPTY_APPOINTMENT_CATALOGS);
   readonly lastEditedField = signal<AppointmentFormField | null>(null);
   readonly availableDoctors = signal<ReadonlySet<string> | null>(null);
@@ -88,11 +93,13 @@ export class AppointmentFormStore {
   readonly isSubmitting = signal<boolean>(false);
 
   readonly value = this.latestValue.asReadonly();
+  readonly doctorSearch = this.doctorText.asReadonly();
 
   readonly cascade = computed<CascadePlan>(() =>
     reduceAppointmentCascade({
       value: this.latestValue(),
       catalogs: this.catalogs(),
+      lockedFields: this.lockedFields(),
       lastEditedField: this.lastEditedField(),
       availableDoctors: this.availableDoctors(),
     })
@@ -111,6 +118,7 @@ export class AppointmentFormStore {
       value.date.length > 0 &&
       value.timeSlot.length > 0 &&
       this.availableSlots().includes(value.timeSlot) &&
+      !this.isLoadingSlots() &&
       !this.isSubmitting()
     );
   });
@@ -135,17 +143,20 @@ export class AppointmentFormStore {
           ? 'Please, choose the specialization'
           : null,
       doctor:
-        touched.has('doctor') && value.doctorId.length === 0 ? 'Please, choose the doctor' : null,
+        touched.has('doctor') &&
+        !this.options().doctors.some((doctor) => doctor.id === value.doctorId)
+          ? this.doctorText().trim() ? 'Invalid doctor name' : 'Please, choose the doctor'
+          : null,
       service:
         touched.has('service') && value.serviceId.length === 0
           ? 'Please, choose the service'
           : null,
       office:
         touched.has('office') && value.officeId.length === 0 ? 'Please, choose the office' : null,
-      date: touched.has('date') && value.date.length === 0 ? 'Please, choose the date' : null,
+      date: touched.has('date') && value.date.length === 0 ? 'Please, select the date' : null,
       timeSlot:
         touched.has('timeSlot') && value.timeSlot.length === 0
-          ? 'Please, choose the time slot'
+          ? 'Please, select the time slot'
           : null,
     };
   });
@@ -178,8 +189,40 @@ export class AppointmentFormStore {
     this.catalogs.set(catalogs);
   }
 
+  prefill(row: AppointmentRow): void {
+    const booking = row.booking;
+    if (booking === undefined) return;
+
+    const catalogs = this.catalogs();
+    const doctor = catalogs.doctors.find(({ id }) => id === booking.doctorId);
+    const service = catalogs.services.find(({ id }) => id === booking.serviceId);
+    const specializationId = service?.specializationId ?? doctor?.specializationId ?? '';
+
+    this.lockedFields.set(new Set(['patient', 'specialization', 'service', 'office']));
+    this.form.setValue({
+      patientId: booking.patientId,
+      patientText: row.patientFullName,
+      specializationId,
+      specializationText: this.labelFor('specialization', specializationId),
+      doctorId: booking.doctorId,
+      doctorText: doctor?.fullName ?? row.doctorFullName,
+      serviceId: booking.serviceId,
+      serviceText: row.serviceName,
+      officeId: booking.officeId,
+      date: booking.date,
+      timeSlot: toTimeLabel(row.startTime),
+    });
+    for (const field of ['patientText', 'specializationText', 'serviceText', 'officeId'] as const) {
+      this.form.controls[field].disable({ emitEvent: false });
+    }
+    this.doctorText.set(this.form.controls.doctorText.value);
+    this.latestValue.set(toFormValue(this.form.getRawValue()));
+  }
+
   /** Selects a catalog entry; the id becomes the source of truth. */
   selectOption(field: AppointmentFormField, option: AutocompleteOption): void {
+    if (this.lockedFields().has(field)) return;
+    this.availableDoctors.set(null);
     this.lastEditedField.set(field);
     this.writeField(field, option.id);
     this.patchValue(field, option.id);
@@ -187,6 +230,8 @@ export class AppointmentFormStore {
 
   /** Stores free text typed into a combobox; an unmatched text clears the id. */
   setText(field: AppointmentFormField, text: string): void {
+    if (this.lockedFields().has(field)) return;
+    if (field === 'doctor') this.doctorText.set(text);
     const textControl = this.textControlFor(field);
 
     if (textControl !== null && textControl.value !== text) {
@@ -195,8 +240,9 @@ export class AppointmentFormStore {
 
     const match = this.findOptionByLabel(field, text);
     const id = match?.id ?? '';
+    if (field !== 'doctor') this.availableDoctors.set(null);
 
-    this.lastEditedField.set(field);
+    this.lastEditedField.set(field === 'doctor' && text.trim().length === 0 ? null : field);
     this.writeField(field, id, { keepText: true });
     this.patchValue(field, id);
   }
@@ -223,6 +269,7 @@ export class AppointmentFormStore {
   }
 
   selectSlot(slot: string): void {
+    this.availableDoctors.set(null);
     this.lastEditedField.set('timeSlot');
     this.writeField('timeSlot', slot);
     this.patchValue('timeSlot', slot);
@@ -336,7 +383,9 @@ export class AppointmentFormStore {
         setControlValue(controls.doctorId, value, emitEvent);
 
         if (options.keepText !== true) {
-          setControlValue(controls.doctorText, this.labelFor('doctor', value), emitEvent);
+          const label = this.labelFor('doctor', value);
+          this.doctorText.set(label);
+          setControlValue(controls.doctorText, label, emitEvent);
         }
         return;
       case 'service':
@@ -396,7 +445,7 @@ export class AppointmentFormStore {
         : field === 'specialization'
           ? catalogs.specializations.map((option) => ({ id: option.id, label: option.name }))
           : field === 'doctor'
-            ? catalogs.doctors.map((option) => ({ id: option.id, label: option.fullName }))
+            ? this.options().doctors.map((option) => ({ id: option.id, label: option.fullName }))
             : field === 'service'
               ? catalogs.services.map((option) => ({ id: option.id, label: option.name }))
               : [];
